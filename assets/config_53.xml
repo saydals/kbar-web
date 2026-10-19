@@ -5778,7 +5778,7 @@
                         <TOOLTIP Value="Autotrim~Activates the autotrim function. Usually this is needed after mechanical changes such as swash-plate adjustments.   To do the Trim Flight, check this box and power up VBar at full positive collective. Note: a double collective twitch confirms.  Hover the heli for 1 minute (at no wind at best) with as few inputs as possible. Afterwards, turn the heli off for 10 secs.  Switch on before next flight at collective neutral position. After the Trim Flight, this function can be deactivated to avoid accidental activation of trim mode" Text="Autotrim~Activates the autotrim function. Usually this is needed after mechanical changes such as swash-plate adjustments.   To do the Trim Flight, check this box and power up VBar at full positive collective. Note: a double collective twitch confirms.  Hover the heli for 1 minute (at no wind at best) with as few inputs as possible. Afterwards, turn the heli off for 10 secs.  Switch on before next flight at collective neutral position. After the Trim Flight, this function can be deactivated to avoid accidental activation of trim mode"/>
                         <TEXT Value="act" Text="act"/>
                         <SETTINGS Nachfrage="0"/>
-                        <POSITION x="125" y="65" Width="55" Height="25"/>
+                        <POSITION x="130" y="65" Width="55" Height="25"/>
                     </UI_OBJECT>
                     <UI_OBJECT Type="Bar">
                         <PARAMETER>
