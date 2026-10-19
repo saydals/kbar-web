@@ -1,4 +1,5 @@
 import { child, children, attr, num, bool, text } from './xml.js';
+import { tr } from './i18n.js';
 import { compile, references } from './expression.js';
 
 function parseItems(el) {
@@ -8,7 +9,7 @@ function parseItems(el) {
     items.push({
       name: attr(it, 'Name', ''),
       value: num(it, 'Value', 0),
-      label: attr(it, 'Text', '') || attr(it, 'Name', ''),
+      label: tr(attr(it, 'Text', '') || attr(it, 'Name', '')),
     });
   }
   return items;
@@ -74,7 +75,7 @@ function parseObject(el) {
     minimumParam: num(settings, 'MinimumParam', 89),
     pitchParam: num(settings, 'PitchParam', 104),
     image: imageEl ? attr(imageEl, 'Path', '') : '',
-    tooltip: tooltipEl ? text(tooltipEl, attr(tooltipEl, 'Value', '')) : '',
+    tooltip: tooltipEl ? tr(text(tooltipEl, attr(tooltipEl, 'Value', ''))) : '',
     fontName: attr(fontEl, 'Name', ''),
     fontStyle: num(fontEl, 'Style', 0),
     fontSize: num(fontEl, 'Size', 11),
@@ -88,7 +89,7 @@ function parseObject(el) {
     value: 0,
   };
   const textEl = child(el, 'TEXT');
-  if (textEl) obj.text = text(textEl, attr(textEl, 'Value', ''));
+  if (textEl) obj.text = tr(text(textEl, attr(textEl, 'Value', '')));
   if (type === 'Combo' || type === 'SwitchImage') obj.items = parseItems(el);
   for (const c of children(el, 'UI_OBJECT')) obj.children.push(parseObject(c));
   return obj;
@@ -127,7 +128,7 @@ export async function loadConfig(url) {
       id: num(t, 'Id', 0),
       name: attr(t, 'Name', ''),
       descr: attr(t, 'Descr', ''),
-      text: text(t, attr(t, 'Descr', '')),
+      text: tr(text(t, attr(t, 'Descr', ''))),
     });
   }
   const pages = [];

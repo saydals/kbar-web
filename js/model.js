@@ -51,6 +51,10 @@ export class ParameterStore {
     };
   }
 
+  clearParamListeners() {
+    this.paramListeners.clear();
+  }
+
   set(id, value, sourceId = 0) {
     const p = this.byId.get(id);
     if (!p) return null;

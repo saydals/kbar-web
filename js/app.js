@@ -1,6 +1,7 @@
 import { loadConfig } from './config.js';
 import { ParameterStore } from './model.js';
 import { buildUi, activatePage, nextPage } from './ui.js';
+import { getLang, ensureLang, trShell, trBank } from './i18n.js';
 import { SerialClient } from './serial.js';
 
 const state = {
@@ -193,11 +194,11 @@ function openModal({ title, body, buttons = [], width = 520, onClose = null }) {
 function confirmDialog(message, title = 'Warning') {
   return new Promise((resolve) => {
     openModal({
-      title,
-      body: `<p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
+      title: trShell(title),
+      body: `<p style="white-space:pre-wrap">${escapeHtml(trShell(message))}</p>`,
       buttons: [
-        { label: 'Cancel', onClick: (close) => { resolve(false); close(); } },
-        { label: 'OK', primary: true, onClick: (close) => { resolve(true); close(); } },
+        { label: trShell('Cancel'), onClick: (close) => { resolve(false); close(); } },
+        { label: trShell('OK'), primary: true, onClick: (close) => { resolve(true); close(); } },
       ],
       onClose: () => resolve(false),
     });
@@ -207,9 +208,9 @@ function confirmDialog(message, title = 'Warning') {
 function alertDialog(message, title = 'Information') {
   return new Promise((resolve) => {
     openModal({
-      title,
-      body: `<p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
-      buttons: [{ label: 'OK', primary: true, onClick: (close) => { close(); resolve(true); } }],
+      title: trShell(title),
+      body: `<p style="white-space:pre-wrap">${escapeHtml(trShell(message))}</p>`,
+      buttons: [{ label: trShell('OK'), primary: true, onClick: (close) => { close(); resolve(true); } }],
       onClose: () => resolve(true),
     });
   });
@@ -225,9 +226,10 @@ function statusDisplay(status, detail = '') {
     'error': { cls: '', label: 'error' },
   };
   const item = map[status] || map['no Connection'];
+  const label = trShell(item.label);
   connPill.className = `conn-pill ${item.cls}`.trim();
-  connPill.textContent = item.label;
-  statusLeft.textContent = detail ? `${item.label} - ${detail}` : item.label;
+  connPill.textContent = label;
+  statusLeft.textContent = detail ? `${label} - ${detail}` : label;
   state.connected = status === 'connected' || status === 'busy';
 }
 
@@ -287,11 +289,13 @@ function buildPageMenu() {
 
 function closeMenus() {
   for (const m of document.querySelectorAll('.menu.open')) m.classList.remove('open');
+  if (menuLayer) menuLayer.innerHTML = '';
+  menuLayerMenu = null;
 }
 
 function showAbout() {
   openModal({
-    title: 'About Setup VStabi',
+    title: trShell('About Setup VStabi'),
     width: 480,
     body: `
       <div style="display:flex;gap:14px;align-items:flex-start">
@@ -305,13 +309,13 @@ function showAbout() {
           <p class="hint">The UI, images and parameter formulas are taken from the original install. Bluetooth SPP works through the COM port created by Windows.</p>
         </div>
       </div>`,
-    buttons: [{ label: 'OK', primary: true }],
+    buttons: [{ label: trShell('OK'), primary: true }],
   });
 }
 
 function showHelp() {
   openModal({
-    title: 'Help',
+    title: trShell('Help'),
     width: 600,
     body: `
       <h3>Bluetooth connection</h3>
@@ -327,7 +331,7 @@ function showHelp() {
       <p>The original <code>-n</code> mode hides the top-level page tabs. Use the navigation buttons inside the pages, or the <b>Parameter &gt; Go to Page</b> menu.</p>
       <h3>Protocol</h3>
       <p>The app polls with <code>C</code>, sends <code>S&lt;id&gt;:&lt;value&gt;;&lt;checksum&gt;</code>, and accepts <code>I&lt;id&gt;:&lt;value&gt;</code> telegrams. Checksums are the low byte of the character sum.</p>`,
-    buttons: [{ label: 'OK', primary: true }],
+    buttons: [{ label: trShell('OK'), primary: true }],
   });
 }
 
@@ -340,16 +344,16 @@ function showLog() {
   body.appendChild(ta);
   const info = document.createElement('p');
   info.className = 'hint';
-  info.textContent = 'Serial traffic and application events.';
+  info.textContent = trShell('Serial traffic and application events.');
   body.appendChild(info);
   state.logModal = ta;
   openModal({
-    title: 'Event Log',
+    title: trShell('Event Log'),
     body,
     width: 720,
     buttons: [
-      { label: 'Clear', onClick: () => { state.log = []; ta.value = ''; } },
-      { label: 'Close', primary: true },
+      { label: trShell('Clear'), onClick: () => { state.log = []; ta.value = ''; } },
+      { label: trShell('Close'), primary: true },
     ],
     onClose: () => { state.logModal = null; },
   });
@@ -375,19 +379,19 @@ async function showConnection() {
       const ports = await navigator.serial.getPorts();
       if (ports.length) {
         const head = document.createElement('p');
-        head.innerHTML = '<b>Authorized ports</b>';
+        head.innerHTML = `<b>${escapeHtml(trShell('Authorized ports'))}</b>`;
         portList.appendChild(head);
         for (const p of ports) {
           const b = document.createElement('button');
           b.type = 'button';
           b.style.margin = '0 4px 4px 0';
-          b.textContent = 'Reconnect';
+          b.textContent = trShell('Reconnect');
           b.addEventListener('click', async () => {
             try {
               await state.serial.reconnect(p);
               closeModal();
             } catch (err) {
-              await alertDialog(err.message || String(err), 'Connection error');
+              await alertDialog(err.message || String(err), trShell('Connection error'));
             }
           });
           portList.appendChild(b);
@@ -398,7 +402,7 @@ async function showConnection() {
   const buttons = [];
   if (supported) {
     buttons.push({
-      label: state.serial.portOpen ? 'Change Port' : 'Connect COM Port',
+      label: state.serial.portOpen ? trShell('Change Port') : trShell('Connect COM Port'),
       primary: true,
       onClick: async (close) => {
         close();
@@ -406,14 +410,14 @@ async function showConnection() {
           await state.serial.connect();
         } catch (err) {
           if (err && err.name === 'NotFoundError') return;
-          await alertDialog(err.message || String(err), 'Connection error');
+          await alertDialog(err.message || String(err), trShell('Connection error'));
         }
       },
     });
   }
   if (state.serial.portOpen) {
     buttons.push({
-      label: 'Disconnect',
+      label: trShell('Disconnect'),
       danger: true,
       onClick: async (close) => {
         close();
@@ -422,7 +426,7 @@ async function showConnection() {
     });
   }
   buttons.push({
-    label: 'Simulation',
+    label: trShell('Simulation'),
     onClick: async (close) => {
       close();
       if (state.serial.portOpen) await state.serial.disconnect();
@@ -430,15 +434,15 @@ async function showConnection() {
       addLog('info', 'Simulation started');
     },
   });
-  buttons.push({ label: 'Cancel' });
-  openModal({ title: 'Bluetooth Connection', body, buttons, width: 620 });
+  buttons.push({ label: trShell('Cancel') });
+  openModal({ title: trShell('Bluetooth Connection'), body, buttons, width: 620 });
 }
 
 function showPresetUnavailable() {
   openModal({
-    title: 'Preset',
+    title: trShell('Preset'),
     body: '<p>Model preset selection requires the original model preset files. They are not part of the installed program directory used for this conversion.</p><p>Use <b>Load</b> to apply a saved <code>.vbr</code> parameter file instead.</p>',
-    buttons: [{ label: 'OK', primary: true }],
+    buttons: [{ label: trShell('OK'), primary: true }],
   });
 }
 
@@ -470,12 +474,12 @@ async function loadFile(file) {
   const text = await file.text();
   const doc = new DOMParser().parseFromString(text, 'application/xml');
   if (doc.querySelector('parsererror')) {
-    await alertDialog('The selected file is not a valid XML parameter file.', 'Load error');
+    await alertDialog(trShell('The selected file is not a valid XML parameter file.'), trShell('Load error'));
     return;
   }
   const root = doc.documentElement;
   if (!root || root.localName !== 'REGISTER') {
-    await alertDialog('The selected file does not contain a REGISTER element.', 'Load error');
+    await alertDialog(trShell('The selected file does not contain a REGISTER element.'), trShell('Load error'));
     return;
   }
   const values = [];
@@ -486,7 +490,7 @@ async function loadFile(file) {
     if (Number.isFinite(id) && Number.isFinite(value)) values.push({ id, value });
   }
   if (!values.length) {
-    await alertDialog('No parameter values were found in the file.', 'Load error');
+    await alertDialog(trShell('No parameter values were found in the file.'), trShell('Load error'));
     return;
   }
   const known = values.filter((v) => state.store.param(v.id));
@@ -503,12 +507,12 @@ async function loadFile(file) {
     ${versionWarning}
     <p class="hint">Applying values sends changed serial parameters to the connected controller.</p>`;
   openModal({
-    title: 'Load Parameters',
+    title: trShell('Load Parameters'),
     body: summary,
     buttons: [
-      { label: 'Cancel' },
+      { label: trShell('Cancel') },
       {
-        label: 'Apply',
+        label: trShell('Apply'),
         primary: true,
         onClick: (close) => {
           close();
@@ -521,26 +525,29 @@ async function loadFile(file) {
 }
 
 async function resetDefaults() {
-  const ok = await confirmDialog('Reset every parameter to the values defined in config_53.xml?', 'Reset to Defaults');
+  const ok = await confirmDialog(trShell('Reset every parameter to the values defined in config_53.xml?'), trShell('Reset to Defaults'));
   if (!ok) return;
   state.store.resetDefaults(0);
   addLog('info', 'All parameters reset to config defaults');
 }
 
 function setupMenus() {
+  applyShellText();
   for (const menu of document.querySelectorAll('.menu')) {
     const label = menu.querySelector('span');
     label.addEventListener('click', (ev) => {
       ev.stopPropagation();
       const open = menu.classList.contains('open');
       closeMenus();
-      if (!open) menu.classList.add('open');
+      if (!open) openMenu(menu);
     });
   }
   document.addEventListener('click', () => closeMenus());
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeMenus(); });
+  window.addEventListener('resize', closeMenus);
   document.querySelectorAll('.dropdown').forEach((d) => d.addEventListener('click', (ev) => ev.stopPropagation()));
   document.querySelectorAll('.dropdown button[data-action]').forEach((b) => {
-    b.addEventListener('click', () => {
+    b.addEventListener('click', async () => {
       closeMenus();
       const action = b.dataset.action;
       if (action === 'load') triggerLoad();
@@ -549,10 +556,179 @@ function setupMenus() {
       else if (action === 'help') showHelp();
       else if (action === 'log') showLog();
       else if (action === 'about') showAbout();
+      else if (action === 'lang-eng') switchLang('eng');
+      else if (action === 'lang-kor') switchLang('kor');
       else if (action === 'exit') closeWindow();
     });
   });
 }
+
+let menuLayer = null;
+let menuLayerMenu = null;
+
+function openMenu(menu) {
+  // Show the dropdown in a body-level layer so the scaled .app-window
+  // stacking context cannot trap it under page widgets.
+  closeMenus();
+  const dd = menu.querySelector('.dropdown');
+  if (!dd) return;
+  if (!menuLayer) {
+    menuLayer = document.createElement('div');
+    menuLayer.className = 'menu-layer';
+    document.body.appendChild(menuLayer);
+    menuLayer.addEventListener('click', (ev) => ev.stopPropagation());
+    menuLayer.addEventListener('mousedown', (ev) => {
+      if (ev.target === menuLayer) closeMenus();
+    });
+  }
+  menuLayer.innerHTML = '';
+  const hostRect = menu.getBoundingClientRect();
+  const scale = Number(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 1;
+  const appWin = document.querySelector('.app-window');
+  const appRect = appWin ? appWin.getBoundingClientRect() : null;
+  // Dropdown is positioned in unscaled page coordinates.
+  const clone = dd.cloneNode(true);
+  clone.classList.add('menu-clone');
+  clone.style.display = 'block';
+  clone.style.position = 'fixed';
+  clone.style.left = `${hostRect.left}px`;
+  clone.style.top = `${hostRect.bottom}px`;
+  clone.style.zIndex = '40000';
+  // Match unscaled width (offsetWidth is post-scale, divide out).
+  const rawW = dd.offsetWidth || menu.offsetWidth || 190;
+  clone.style.minWidth = `${Math.round(rawW / (scale || 1))}px`;
+  menuLayer.appendChild(clone);
+  menu.classList.add('open');
+  menuLayerMenu = menu;
+  // Wire clone buttons to the originals (same data-action dispatch).
+  clone.querySelectorAll('button[data-action], button[data-page]').forEach((cb) => {
+    cb.addEventListener('click', () => {
+      const key = cb.dataset.action || `page:${cb.dataset.page}`;
+      closeMenus();
+      const orig = dd.querySelector(
+        cb.dataset.action ? `button[data-action="${cb.dataset.action}"]` : `button[data-page="${cb.dataset.page}"]`
+      );
+      if (orig) orig.click();
+      else if (key.startsWith('page:')) {
+        const idx = Number(cb.dataset.page);
+        if (Number.isFinite(idx) && state.ui) activatePage(state.ui, idx);
+      }
+    });
+  });
+}
+
+function applyShellText() {
+  const menuText = { file: 'File', parameter: 'Parameter', info: 'Info' };
+  for (const menu of document.querySelectorAll('.menu')) {
+    const span = menu.querySelector('span');
+    const key = menu.dataset.menu;
+    if (span && key && menuText[key]) span.textContent = trShell(menuText[key]);
+  }
+  for (const b of document.querySelectorAll('.dropdown button[data-action]')) {
+    const a = b.dataset.action;
+    if (a === 'lang-eng' || a === 'lang-kor') continue;
+    const src = b.dataset.en || (b.dataset.en = b.textContent.trim());
+    if (src) b.textContent = trShell(src);
+  }
+  for (const s of document.querySelectorAll('.submenu-label')) {
+    const src = s.dataset.en || (s.dataset.en = s.textContent.trim());
+    if (src) s.textContent = trShell(src);
+  }
+  const tbText = { btnLoad: 'Load', btnSave: 'Save', btnConnect: 'Bluetooth' };
+  for (const [id, src] of Object.entries(tbText)) {
+    const btn = el(id);
+    const span = btn ? btn.querySelector('span') : null;
+    if (span) span.textContent = trShell(src);
+  }
+  const tbTitle = {
+    btnLoad: 'Load actual Bank from File',
+    btnSave: 'Save actual Bank to File',
+    btnConnect: 'Connect Bluetooth SPP COM port',
+  };
+  for (const [id, src] of Object.entries(tbTitle)) {
+    const btn = el(id);
+    if (btn) btn.title = trShell(src);
+  }
+  bankPill.title = trShell('Active bank');
+  const winTitle = { btnMin: 'Minimize', btnMax: 'Maximize', btnClose: 'Close' };
+  for (const [id, src] of Object.entries(winTitle)) {
+    const btn = el(id);
+    if (btn) btn.title = trShell(src);
+  }
+  const restore = el('btnRestore');
+  if (restore) restore.textContent = trShell('Restore');
+  markLang();
+  refreshStatusTexts();
+}
+
+function markLang() {
+  const lang = getLang();
+  for (const b of document.querySelectorAll('.dropdown button[data-action^="lang-"]')) {
+    b.classList.toggle('active-lang', (b.dataset.action === 'lang-kor') === (lang === 'kor'));
+  }
+}
+
+function refreshStatusTexts() {
+  statusDisplay(state.serial ? state.serial.status : state.prevSerialStatus);
+  if (state.store) bankPill.textContent = trBank(state.store.get(29));
+  const idx = state.ui ? state.ui.active : state.lastPage;
+  if (state.config && state.config.pages[idx]) {
+    statusRight.textContent = `VStabi 5.3.4 - 29.10.2012    ${pageTitle(state.config.pages[idx])}`;
+  }
+}
+
+async function switchLang(lang) {
+  if (getLang() === lang) { markLang(); return; }
+  if (lang === 'kor') {
+    try { await ensureLang('kor'); }
+    catch (err) {
+      await alertDialog('Cannot load lang_kr.xml. Staying in English.', 'Language');
+      return;
+    }
+  } else { await ensureLang('eng'); }
+  const savedPage = state.ui ? state.ui.active : state.lastPage;
+  if (state.config && state.store) {
+    const live = new Map();
+    for (const p of state.store.allParams()) live.set(p.id, state.store.get(p.id));
+    state.config = await loadConfig('assets/config_53.xml');
+    for (const [id, v] of live) {
+      if (state.store.param(id)) state.store.values[id] = v;
+    }
+    state.store.clearParamListeners();
+    pagesRoot.innerHTML = '';
+    state.ui = buildUi(state.config, state.store, {
+      confirm: confirmDialog,
+      openUrl: (url) => window.open(url, '_blank', 'noopener'),
+      onPageChanged,
+      onPageVisibilityChanged,
+    });
+    wireStoreListeners();
+    state.ui.refresh();
+    buildPageMenu();
+    activatePage(state.ui, savedPage);
+  }
+  applyShellText();
+  addLog('info', `Language: ${lang}`);
+}
+
+function wireStoreListeners() {
+  state.store.addParamListener([997], (adj) => {
+    const v = adj.value;
+    if (v === 100) nextPage(state.ui, 1);
+    else if (v === 101) nextPage(state.ui, -1);
+    else if (v === 10101) showPresetUnavailable();
+    else if (v >= 0 && v < state.config.pages.length) activatePage(state.ui, v);
+  });
+  state.store.addParamListener([996], () => showPresetUnavailable());
+  state.store.addParamListener([998], () => showHelp());
+  state.store.addParamListener([29], (adj) => {
+    bankPill.textContent = trBank(adj.value);
+  });
+  state.store.addParamListener([498], (adj) => {
+    if ((adj.value & 32) !== 0) addLog('info', `Status register 498=${adj.value}`);
+  });
+}
+
 
 function closeWindow() {
   if (state.closed) return;
@@ -560,7 +736,7 @@ function closeWindow() {
   document.body.classList.add('is-closed');
   const overlay = document.createElement('div');
   overlay.className = 'closed-overlay';
-  overlay.innerHTML = `<img src="assets/ui/logo51_32x32.png" alt=""><h2>Setup VStabi closed</h2><p>Reload the page to open the application again.</p><button type="button" id="reopenBtn">Reopen</button>`;
+  overlay.innerHTML = `<img src="assets/ui/logo51_32x32.png" alt=""><h2>${escapeHtml(trShell('Setup VStabi closed'))}</h2><p>${escapeHtml(trShell('Reload the page to open the application again.'))}</p><button type="button" id="reopenBtn">${escapeHtml(trShell('Reopen'))}</button>`;
   document.body.appendChild(overlay);
   overlay.querySelector('#reopenBtn').addEventListener('click', () => location.reload());
 }
@@ -618,6 +794,7 @@ function setupKeyboard() {
 }
 
 async function init() {
+  await ensureLang(getLang());
   setupMenus();
   setupWindowControls();
   setupKeyboard();
@@ -626,7 +803,7 @@ async function init() {
   statusDisplay('no Connection');
   const splash = document.createElement('div');
   splash.className = 'loading-overlay';
-  splash.innerHTML = '<img src="assets/ui/logo51_32x32.png" alt=""><div>Loading VStabi 5.3 ...</div>';
+  splash.innerHTML = `<img src="assets/ui/logo51_32x32.png" alt=""><div>${escapeHtml(trShell('Loading VStabi 5.3 ...'))}</div>`;
   document.body.appendChild(splash);
   try {
     const config = await loadConfig('assets/config_53.xml');
@@ -639,22 +816,8 @@ async function init() {
       onPageVisibilityChanged,
     });
     buildPageMenu();
-    state.store.addParamListener([997], (adj) => {
-      const v = adj.value;
-      if (v === 100) nextPage(state.ui, 1);
-      else if (v === 101) nextPage(state.ui, -1);
-      else if (v === 10101) showPresetUnavailable();
-      else if (v >= 0 && v < state.config.pages.length) activatePage(state.ui, v);
-    });
-    state.store.addParamListener([996], () => showPresetUnavailable());
-    state.store.addParamListener([998], () => showHelp());
-    state.store.addParamListener([29], (adj) => {
-      bankPill.textContent = `Bank ${adj.value}`;
-    });
-    state.store.addParamListener([498], (adj) => {
-      if ((adj.value & 32) !== 0) addLog('info', `Status register 498=${adj.value}`);
-    });
-    bankPill.textContent = `Bank ${state.store.get(29)}`;
+    wireStoreListeners();
+    bankPill.textContent = trBank(state.store.get(29));
     state.serial = new SerialClient(state.store, {
       onStatus: onSerialStatus,
       onLog: (dir, text) => addLog(dir, text),
@@ -693,7 +856,7 @@ async function init() {
   } catch (err) {
     console.error(err);
     splash.remove();
-    await alertDialog(err.message || String(err), 'Startup error');
+    await alertDialog(err.message || String(err), trShell('Startup error'));
   } finally {
     splash.remove();
   }

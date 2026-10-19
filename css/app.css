@@ -2,8 +2,8 @@
   --scale: 1;
   --frame-w: 979px;
   --frame-h: 566px;
-  --ui-font: Arial, Helvetica, sans-serif;
-  --menu-font: "Segoe UI", Tahoma, Arial, sans-serif;
+  --ui-font: Arial, "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", Helvetica, sans-serif;
+  --menu-font: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", Tahoma, Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -92,7 +92,7 @@ body {
   border-bottom: 1px solid #c8c8c8;
   font-size: 12px;
   position: relative;
-  z-index: 60;
+  z-index: 500;
 }
 .menu {
   position: relative;
@@ -112,7 +112,7 @@ body {
   background: #f7f7f7;
   border: 1px solid #a0a0a0;
   box-shadow: 2px 2px 6px rgba(0,0,0,.25);
-  z-index: 100;
+  z-index: 600;
 }
 .menu.open .dropdown { display: block; }
 .dropdown button {
@@ -127,6 +127,14 @@ body {
   white-space: nowrap;
 }
 .dropdown button:hover { background: #cfe3f7; }
+.dropdown button.active-lang { font-weight: 700; }
+.menu-layer:empty { display: none; }
+.menu-layer .dropdown.menu-clone {
+  font-size: 12px;
+}
+.menu-layer .dropdown.menu-clone button {
+  font-size: 12px;
+}
 .dropdown .sep { height: 1px; background: #d3d3d3; margin: 3px 4px; }
 .submenu-label { padding: 4px 10px 2px; color: #666; font-size: 11px; }
 .page-menu { max-height: 320px; overflow-y: auto; }

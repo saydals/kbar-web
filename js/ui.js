@@ -1,4 +1,5 @@
 import { evaluateFn, formatValue } from './expression.js';
+import { trShell } from './i18n.js';
 
 const ASSET = 'assets/';
 const CHANNEL_PARAMS = [210, 211, 212, 213, 214, 215, 216, 236, 239];
@@ -394,7 +395,7 @@ function setupCheck(obj, el, ctx) {
   input.addEventListener('change', async () => {
     if (obj.disableEvents) return;
     let ok = true;
-    if (obj.nachfrage) ok = await ctx.app.confirm(`Are you sure you want to execute this function? : ${obj.text}`, 'Warning');
+    if (obj.nachfrage) ok = await ctx.app.confirm(`${trShell('Are you sure you want to execute this function?')} : ${obj.text}`, trShell('Warning'));
     if (!ok) {
       obj.disableEvents = true;
       input.checked = !input.checked;
@@ -469,7 +470,7 @@ function setupButton(obj, el, ctx) {
           .replace(/\n{3,}/g, '\n\n')
           .trim();
       }
-      const ok = await ctx.app.confirm(`${message}  : ${obj.text}`, title);
+      const ok = await ctx.app.confirm(`${trShell(message)}  : ${obj.text}`, trShell(title));
       if (!ok) return;
     }
     const at = obj.text.indexOf('@');
