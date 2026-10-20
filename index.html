@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Setup VStabi</title>
 <link rel="icon" href="assets/ui/logo51_32x32.png">
 <link rel="stylesheet" href="css/app.css">
@@ -10,59 +10,51 @@
 <body>
 <div id="stage">
   <div id="appWindow" class="app-window">
-    <div class="titlebar">
-      <img class="titlebar-icon" src="assets/ui/logo51_32x32.png" alt="">
-      <div class="titlebar-title">Setup VStabi</div>
-      <div class="titlebar-buttons">
-        <button class="winbtn" id="btnMin" title="Minimize">&#x2013;</button>
-        <button class="winbtn" id="btnMax" title="Maximize">&#x25A1;</button>
-        <button class="winbtn close" id="btnClose" title="Close">&#x2715;</button>
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="assets/ui/logo51_32x32.png" alt="">
+        <span>Setup VStabi</span>
       </div>
-    </div>
-    <div class="menubar" id="menubar">
-      <div class="menu" data-menu="file"><span>File</span>
-        <div class="dropdown">
-          <button data-action="load">Load ...</button>
-          <button data-action="save">Save ...</button>
-          <div class="sep"></div>
-          <button data-action="exit">Exit</button>
+      <nav class="sidebar-menu">
+        <div class="menu" data-menu="file"><span>File</span>
+          <div class="dropdown">
+            <button data-action="load">Load ...</button>
+            <button data-action="save">Save ...</button>
+            <div class="sep"></div>
+            <button data-action="exit">Exit</button>
+          </div>
         </div>
-      </div>
-      <div class="menu" data-menu="parameter"><span>Parameter</span>
-        <div class="dropdown">
-          <button data-action="reset">Reset to Defaults</button>
-          <div class="sep"></div>
-          <div class="submenu-label">Go to Page</div>
-          <div id="pageMenu" class="page-menu"></div>
+        <div class="menu" data-menu="parameter"><span>Parameter</span>
+          <div class="dropdown">
+            <button data-action="reset">Reset to Defaults</button>
+            <div class="sep"></div>
+            <div class="submenu-label">Go to Page</div>
+            <div id="pageMenu" class="page-menu"></div>
+          </div>
         </div>
-      </div>
-      <div class="menu" data-menu="info"><span>Info</span>
-        <div class="dropdown">
-          <button data-action="help">Help</button>
-          <button data-action="log">Event Log</button>
-          <div class="sep"></div>
-          <button data-action="about">About</button>
-          <div class="sep"></div>
-          <button data-action="lang-eng">English</button>
-          <button data-action="lang-kor">한국어</button>
+        <div class="menu" data-menu="info"><span>Info</span>
+          <div class="dropdown">
+            <button data-action="help">Help</button>
+            <button data-action="log">Event Log</button>
+            <div class="sep"></div>
+            <button data-action="about">About</button>
+            <div class="sep"></div>
+            <button data-action="lang-eng">English</button>
+            <button data-action="lang-kor">한국어</button>
+          </div>
         </div>
-      </div>
-    </div>
-    <div class="toolbar">
-      <button class="tbtn" id="btnLoad" title="Load actual Bank from File"><img src="assets/ui/loadFile.gif" alt=""><span>Load</span></button>
-      <button class="tbtn" id="btnSave" title="Save actual Bank to File"><img src="assets/ui/saveFile.gif" alt=""><span>Save</span></button>
-      <div class="tsep"></div>
-      <button class="tbtn" id="btnConnect" title="Connect Bluetooth SPP COM port"><img src="assets/ui/bt.png" alt=""><span>Bluetooth</span></button>
-      <div class="conn-pill" id="connPill">no Connection</div>
-      <div class="toolbar-spacer"></div>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <button class="side-exit" id="btnExit" title="Exit">Exit</button>
       <div class="bank-pill" id="bankPill" title="Active bank">Bank 0</div>
-    </div>
+      <button class="side-icon" id="btnConnect" title="Connect Bluetooth" aria-label="Connect Bluetooth">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <path fill="currentColor" d="M12 2.5 17.5 7l-4.7 4.5 4.7 4.5-5.5 4.5V2.5zm1.7 4.1v3.3l1.9-1.5-1.9-1.8zm0 6.6v3.4l1.9-1.7-1.9-1.7zM6.7 7.6 11 11.3l-3.7 3.2-1.2-1.4 2.5-2.1-2.5-2z"/>
+        </svg>
+      </button>
+    </aside>
     <div class="content" id="content">
       <div class="pages" id="pages"></div>
-    </div>
-    <div class="statusbar">
-      <span class="status-text" id="statusLeft">no Connection</span>
-      <span class="status-text right" id="statusRight">VStabi 5.3.4 - 29.10.2012</span>
     </div>
   </div>
   <div class="minimized-bar" id="minimizedBar">

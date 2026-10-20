@@ -438,6 +438,7 @@ function setupField(obj, el, ctx) {
     }
   });
   input.addEventListener('blur', commit);
+  input.addEventListener('change', commit);
   input.addEventListener('input', () => input.classList.remove('invalid'));
 }
 

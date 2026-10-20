@@ -114,7 +114,7 @@ body {
   box-shadow: 2px 2px 6px rgba(0,0,0,.25);
   z-index: 600;
 }
-.menu.open .dropdown { display: block; }
+.menu.open .dropdown { display: none !important; } /* original stays hidden in all layouts; body-level clone is shown */
 .dropdown button {
   display: block;
   width: 100%;
@@ -130,11 +130,31 @@ body {
 .dropdown button.active-lang { font-weight: 700; }
 .menu-layer:empty { display: none; }
 .menu-layer .dropdown.menu-clone {
-  font-size: 12px;
+  display: block;
+  position: fixed;
+  min-width: 190px;
+  padding: 2px 0;
+  background: #f7f7f7;
+  border: 1px solid #a0a0a0;
+  box-shadow: 2px 2px 6px rgba(0,0,0,.25);
+  font-size: 13px;
+  z-index: 40000;
 }
 .menu-layer .dropdown.menu-clone button {
-  font-size: 12px;
+  display: block;
+  width: 100%;
+  padding: 6px 22px 6px 20px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: 13px var(--menu-font);
+  cursor: default;
+  white-space: nowrap;
 }
+.menu-layer .dropdown.menu-clone button:hover { background: #cfe3f7; }
+.menu-layer .dropdown.menu-clone button.active-lang { font-weight: 700; }
+.menu-layer .submenu-label { padding: 4px 10px 2px; color: #666; font-size: 12px; }
+.menu-layer .page-menu { max-height: min(56vh, 380px); overflow-y: auto; }
 .dropdown .sep { height: 1px; background: #d3d3d3; margin: 3px 4px; }
 .submenu-label { padding: 4px 10px 2px; color: #666; font-size: 11px; }
 .page-menu { max-height: 320px; overflow-y: auto; }
@@ -519,6 +539,44 @@ body.is-minimized .minimized-bar { display: flex; }
 .modal-body li { margin: 2px 0; }
 .modal-body code { background: #e4e4e4; padding: 1px 4px; border: 1px solid #d0d0d0; }
 .modal-body .hint { color: #555; font-size: 11px; }
+/* Device Event Log (ported from VStabiShell CErrorList) */
+.event-log-status { margin: 0 0 8px; }
+.event-log-table-wrap {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #a0a0a0;
+  background: #fff;
+  margin-bottom: 10px;
+}
+.event-log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.event-log-table thead th {
+  position: sticky;
+  top: 0;
+  background: #e8ecf1;
+  border-bottom: 1px solid #a0a0a0;
+  padding: 4px 8px;
+  text-align: left;
+  font-weight: 700;
+}
+.event-log-table td { padding: 3px 8px; border-bottom: 1px solid #e0e0e0; }
+.event-log-table tbody tr:nth-child(even) td { background: #f4f6f9; }
+.event-log-icon { width: 26px; text-align: center; }
+.event-log-code { width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.event-log-time { width: 64px; font-variant-numeric: tabular-nums; }
+.event-log-descr { white-space: normal; }
+.event-log-table tbody tr.event-log-reset td { background: #dcdcdc; }
+.event-log-empty td { text-align: center; color: #666; padding: 18px 8px; }
+.event-log > button[data-fetch] {
+  margin-right: 8px;
+  padding: 5px 14px;
+  font: 12px var(--menu-font);
+  border: 1px solid #7a7a7a;
+  border-radius: 3px;
+  background: linear-gradient(#fdfdfd, #e3e7ec);
+  cursor: pointer;
+}
+.event-log > button[data-fetch]:disabled { opacity: .45; cursor: default; }
+.event-log > button[data-fetch]:not(:disabled):hover { background: #cfe3f7; }
 .modal-body .log {
   width: 100%;
   height: 300px;
@@ -589,3 +647,239 @@ body.is-closed .app-window { display: none; }
 @media (max-width: 1000px) {
   .app-window { box-shadow: none; }
 }
+
+/* Android app adaptation */
+body.is-android .titlebar-buttons { display: none; }
+body.is-android .winbtn { display: none; }
+.android-device-btn {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  margin: 3px 0;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid #a7b7c9;
+  border-radius: 3px;
+  background: linear-gradient(#fbfdff, #e9f1f9);
+  font: inherit;
+  cursor: pointer;
+}
+.android-device-btn:hover { background: #dcebfa; }
+.android-device-btn:active { background: #cfe3f7; }
+.android-device-btn span { margin-left: auto; color: #5b6773; font-size: 11px; }
+.android-device-btn b { font-weight: 600; }
+.android-device-list { max-height: 92px; overflow-y: auto; margin-bottom: 10px; }
+
+/* Compact landscape layout: vertical sidebar replaces the top bars */
+:root { --frame-w: 1079px; --frame-h: 477px; }
+.app-window { flex-direction: row; }
+.content { flex: 1; height: 100%; border-top: 0; padding: 0; }
+.sidebar {
+  width: 104px;
+  flex: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(#eef3f8, #dde5ee);
+  border-right: 1px solid #8a8a8a;
+  position: relative;
+  z-index: 100;
+  overflow: hidden;
+}
+.sidebar-brand {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 2px 8px;
+  background: linear-gradient(#5a9bd8 0%, #2f6fae 45%, #245d95 55%, #3e82c4 100%);
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(0,0,0,.55);
+  font: 600 10px var(--menu-font);
+  line-height: 1.2;
+}
+.sidebar-brand img { width: 26px; height: 26px; }
+.sidebar-menu { flex: none; padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+.sidebar .menu {
+  display: block;
+  width: 100%;
+  padding: 7px 2px;
+  text-align: center;
+  font: 600 12px var(--menu-font);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: default;
+}
+.sidebar .menu > span { display: block; }
+.sidebar .menu:hover, .sidebar .menu.open { background: #cfe3f7; border-color: #9eb6d0; }
+.sidebar .dropdown { left: 100%; top: 0; }
+.sidebar-spacer { flex: 1; }
+.side-exit {
+  flex: none;
+  width: 56px;
+  height: 52px;
+  margin: 0 auto 15px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #8a8a8a;
+  border-radius: 6px;
+  background: linear-gradient(#fff, #e7e7e7);
+  font: 600 11px var(--ui-font);
+  color: #333;
+  cursor: pointer;
+}
+.side-exit:hover { background: linear-gradient(#fff, #d8e6f5); border-color: #8fa9c4; }
+.side-exit:active { background: #cde0f4; }
+.sidebar .bank-pill { margin: 0 auto 5px; height: 20px; font-size: 10px; }
+.side-icon {
+  flex: none;
+  width: 56px;
+  height: 52px;
+  margin: 0 auto 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c08a8a;
+  border-radius: 6px;
+  background: linear-gradient(#fff4f4, #f2d4d4);
+  color: #c62828;
+  cursor: pointer;
+  padding: 0;
+}
+.side-icon.connected { color: #1b7f2d; background: linear-gradient(#d9f5df, #a9e0b4); border-color: #4a8f4a; }
+.side-icon.io-rx { color: #6b5200; background: linear-gradient(#fff4c2, #ffe27a); border-color: #c9a227; }
+.side-icon.io-tx { color: #0d3f70; background: linear-gradient(#d5eaff, #9cc6ee); border-color: #3f7db5; }
+.side-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+/* Tablet / wide-screen layout: horizontal header across the top */
+body.layout-top { --frame-w: 977px; --frame-h: 541px; }
+body.layout-top .app-window { flex-direction: column; }
+body.layout-top .sidebar {
+  width: 100%;
+  height: 64px;
+  flex-direction: row;
+  align-items: center;
+  border-right: 0;
+  border-bottom: 1px solid #8a8a8a;
+  overflow: visible;
+}
+body.layout-top .sidebar-brand {
+  flex-direction: row;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 12px;
+  font-size: 11px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+body.layout-top .sidebar-brand img { width: 26px; height: 26px; }
+body.layout-top .sidebar-menu {
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+  padding: 0 4px;
+  gap: 2px;
+}
+body.layout-top .sidebar .menu {
+  width: auto;
+  padding: 8px 14px;
+}
+/* layout-top: dropdown origin is below the header item */
+body.layout-top .sidebar .dropdown { left: 0; top: 100%; }
+/* layout-top: bigger, roomier dropdown (uses lower empty space) */
+body.layout-top .menu-layer .dropdown.menu-clone {
+  min-width: 300px;
+  font-size: 14px;
+  padding: 4px 0;
+}
+body.layout-top .menu-layer .dropdown.menu-clone button {
+  font-size: 14px;
+  padding: 8px 22px 8px 20px;
+}
+body.layout-top .menu-layer .submenu-label {
+  font-size: 13px;
+  padding: 6px 10px 4px;
+}
+body.layout-top .menu-layer .page-menu { max-height: min(58vh, 460px); }
+body.layout-top .sidebar-spacer { flex: 1; }
+body.layout-top .side-exit { margin: 0 6px 0 0; height: 52px; }
+body.layout-top .sidebar .bank-pill {
+  margin: 0 6px;
+  height: 52px;
+  width: auto;
+  min-width: 76px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+body.layout-top .side-icon { margin: 0 8px 0 0; }
+body.layout-top .content {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  border-top: 0;
+}
+
+/* Custom numeric keypad (ported from rfcap-apk) */
+#rf-numpad {
+  --rk: calc(var(--scale, 1) * 0.85);
+  position: fixed;
+  z-index: 2147483647;
+  display: none;
+  width: calc(340px * var(--rk));
+  padding: calc(10px * var(--rk));
+  border: calc(1px * var(--rk)) solid #555;
+  border-radius: calc(12px * var(--rk));
+  background: rgba(28, 31, 37, .96);
+  box-shadow: 0 calc(6px * var(--rk)) calc(24px * var(--rk)) rgba(0,0,0,.45);
+  touch-action: manipulation;
+}
+#rf-numpad .rfnp-handle {
+  height: calc(18px * var(--rk));
+  margin: 0 calc(-6px * var(--rk)) calc(4px * var(--rk));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+#rf-numpad .rfnp-handle span {
+  width: calc(56px * var(--rk));
+  height: calc(5px * var(--rk));
+  border-radius: calc(3px * var(--rk));
+  background: rgba(180, 190, 200, .55);
+}
+#rf-numpad .rfnp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: calc(8px * var(--rk));
+}
+#rf-numpad button {
+  min-width: 0;
+  height: calc(46px * var(--rk));
+  padding: 0;
+  border: 1px solid #4b5563;
+  border-radius: calc(8px * var(--rk));
+  background: linear-gradient(#4a515c, #343941);
+  color: #f2f5f8;
+  font: 600 calc(20px * var(--rk)) var(--ui-font);
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+#rf-numpad button:active { background: #6c7684; }
+#rf-numpad button[data-k="DONE"] { background: #1f8a3b; border-color: #35b45a; color: #fff; }
+#rf-numpad button[data-k="BKSP"] { color: #ffb4a8; }
+.rf-editing { border-color: #2c6da8 !important; background: #cfe5ff !important; color: #000 !important; }

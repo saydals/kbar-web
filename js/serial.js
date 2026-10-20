@@ -1,4 +1,6 @@
 import { SERIAL_SOURCE } from './model.js';
+import { AndroidSerialPort, isAndroidNative } from './android.js';
+import { EVENT_LOG_PARAM, EVENT_LOG_STREAM_PARAM } from './eventlog.js';
 
 const BAUD = 9600;
 
@@ -42,7 +44,14 @@ export class SerialClient {
   }
 
   static supported() {
-    return 'serial' in navigator;
+    return isAndroidNative() || 'serial' in navigator;
+  }
+
+  async connectAndroid(device) {
+    if (!isAndroidNative()) throw new Error('Android Bluetooth transport is not available.');
+    const port = new AndroidSerialPort(device);
+    await this.openPort(port);
+    return port;
   }
 
   setStatus(status, detail = '') {
@@ -55,6 +64,9 @@ export class SerialClient {
   }
 
   async connect() {
+    if (isAndroidNative()) {
+      throw new Error('Choose a paired SPP or nearby BLE device from the Bluetooth dialog.');
+    }
     if (!SerialClient.supported()) {
       throw new Error('Web Serial is not available in this browser. Use Chrome or Edge on desktop over http://127.0.0.1.');
     }
@@ -72,7 +84,13 @@ export class SerialClient {
     if (this.portOpen) await this.disconnect();
     this.port = port;
     this.setStatus('waiting', 'Opening port');
-    this.log('info', 'Opening serial port at 9600 8N1');
+    const native = port instanceof AndroidSerialPort;
+    if (native) {
+      port.onLost = () => this.handlePortLost();
+      this.log('info', `Opening ${port.label}`);
+    } else {
+      this.log('info', 'Opening serial port at 9600 8N1');
+    }
     try {
       await port.open({
         baudRate: BAUD,
@@ -95,7 +113,7 @@ export class SerialClient {
     this.queue = [];
     this.buffer = '';
     this.lastTelegram = Date.now();
-    this.setStatus('connected', 'COM port open');
+    this.setStatus('connected', native ? 'Bluetooth link open' : 'COM port open');
     this.startReadLoop();
     this.heartbeatTimer = setInterval(() => this.heartbeat(), 2000);
     this.idleTimer = setInterval(() => this.checkIdle(), 1000);
@@ -106,6 +124,7 @@ export class SerialClient {
   }
 
   portLabel(port) {
+    if (port && port.label) return port.label;
     try {
       const info = port.getInfo ? port.getInfo() : {};
       const v = info.usbVendorId !== undefined ? info.usbVendorId.toString(16) : '';
@@ -185,6 +204,23 @@ export class SerialClient {
       if (!Number.isFinite(id)) return;
       const values = valuesText.trim().split(/\s+/).filter(Boolean);
       if (!values.length) return;
+      if (id === EVENT_LOG_STREAM_PARAM) {
+        // Device event-log stream: the controller answers S107 with I140
+        // telegrams (one log code each), not with the request id 107.
+        // The original also stores the code in parameter 140.
+        // First stream telegram proves the request got through: stop retries.
+        this.cancelEventLogRetry();
+        for (const vs of values) {
+          const value = Number.parseInt(vs, 10);
+          if (!Number.isFinite(value)) continue;
+          // The original stores the code in parameter 140 and notifies its
+          // listeners with the *clamped* value (0..256 for that parameter).
+          const stored = this.store.set(id, value, SERIAL_SOURCE);
+          const code = stored === null || stored === undefined ? value : stored;
+          if (this.handlers.onLogEntry) this.handlers.onLogEntry(id, code);
+        }
+        return;
+      }
       for (const vs of values) {
         const value = Number.parseInt(vs, 10);
         if (Number.isFinite(value)) this.store.set(id, value, SERIAL_SOURCE);
@@ -214,7 +250,9 @@ export class SerialClient {
   }
 
   heartbeat() {
-    if (!this.portOpen) return;
+    // Only poll when idle: never pre-empt a queued write (e.g. S107 log
+    // fetch) — at 9600 baud over SPP a colliding C can bury the request.
+    if (!this.portOpen || !this.paramAck || this.queue.length) return;
     this.rawWrite('C\n');
   }
 
@@ -241,6 +279,34 @@ export class SerialClient {
     }
     this.queue.push({ parameter: adj.parameter, value: adj.value });
     this.pump();
+  }
+
+  // Device event-log request (S107:63 = recent 100, S107:64 = all entries).
+  // Goes through the normal ack queue like the original CParameter.adjust:
+  // responses stream back as I140 telegrams through onLogEntry.
+  // Retried up to 3x: at 9600 baud over SPP a single wireless write can be
+  // lost, and the controller only answers when it actually receives S107.
+  requestEventLog(kind, attempt = 1) {
+    if (!this.portOpen) throw new Error('Not connected.');
+    const p = this.store.param(EVENT_LOG_PARAM);
+    if (!p) throw new Error('Event log parameter (107) is not defined.');
+    this.enqueue({ parameter: EVENT_LOG_PARAM, value: kind });
+    if (attempt < 3) {
+      if (this.eventLogRetry) clearTimeout(this.eventLogRetry);
+      this.eventLogRetry = setTimeout(() => {
+        this.eventLogRetry = null;
+        if (!this.portOpen) return;
+        if (this.handlers.onLogRetry) this.handlers.onLogRetry(attempt + 1);
+        try { this.requestEventLog(kind, attempt + 1); } catch (err) {}
+      }, 4000);
+    }
+  }
+
+  cancelEventLogRetry() {
+    if (this.eventLogRetry) {
+      clearTimeout(this.eventLogRetry);
+      this.eventLogRetry = null;
+    }
   }
 
   pump() {
@@ -271,8 +337,12 @@ export class SerialClient {
     this.ackTimer = null;
     if (this.paramAck) return;
     this.paramAck = true;
-    this.log('error', `Timeout waiting for ack of ${item.parameter}:${item.value}`);
-    this.setStatus('timeout', `No ack for parameter ${item.parameter}`);
+    // Event-log fetch (107) is answered by an I107 stream, not a B ack.
+    // Only report a timeout when it is a normal parameter write.
+    if (item.parameter !== EVENT_LOG_PARAM) {
+      this.log('error', `Timeout waiting for ack of ${item.parameter}:${item.value}`);
+      this.setStatus('timeout', `No ack for parameter ${item.parameter}`);
+    }
     this.pump();
   }
 
@@ -314,6 +384,9 @@ export class SerialClient {
     if (this.idleTimer) clearInterval(this.idleTimer);
     this.heartbeatTimer = null;
     this.idleTimer = null;
+    this.port = null;
+    this.reader = null;
+    this.writer = null;
     this.setStatus('no Connection', 'Port disconnected');
     this.log('error', 'Serial port disconnected');
   }

@@ -1,0 +1,939 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ERRORS>
+    <ERROR Code="0" Opcode="ERROR_GOOD_HEALTH" Type="Good" >
+		<TEXT Lang="en"  Short="Good Health Message (10sec)">
+This Message describes the good health state. That means, that the VBar unit does not see
+any error or Info Message in the last 10 Seconds.
+		</TEXT>
+		<TEXT Lang="de"  Short="Alles in Ordnung (10sec)">
+Es ist alles in Ordnung für 10 Sekunden. Innerhalb dieser Zeit sind keine Störungen gemedet worden
+		</TEXT>
+	</ERROR>
+	
+	
+    <ERROR Code="1" Opcode="ERROR_COLDSTART" Type="Good">
+		<TEXT Lang="en"  Short="Coldstart">
+A Coldstart is done on the beginning of each switch on time. A Coldstart can happen only, if
+the VBar Units is disconnected from power for more than 5 Seconds. 
+		</TEXT>
+		<TEXT Lang="de"  Short="Kaltstart">
+Ein Kaltstart passiert, wenn der VStabi nach mindestens 5 Sekunden wieder mit Strom Versorgt wird
+Beim Kaltstart werden die Snesoren neu kalibriert.
+		</TEXT>
+	</ERROR>
+	
+	
+    <ERROR Code="2" Opcode="ERROR_WARMSTART" Type="Critical">
+		<TEXT Lang="en"  Short="Warmstart">
+Warmstart is an indication for a short power loss, or any other reset reason. If the CPU comes
+up, and detects, that the power loss was less than 5 seconds, this causes a warmstart. This 
+can happen also, if power is applyed and removed in a short sequence. When bining a Spektrum
+Sattelite, this will occur and is intended.
+		</TEXT>
+		<TEXT Lang="de"  Short="Warmstart">
+Ein Warmstart passiert nach einer kurzen Unterbrechung der Versorgungsspannung. Mit Ausnahme von beabsichtigen
+Warmstarts beim Binden von Spektrum Satelliten ist ein Warmstart ein Hinweis auf ernste Probleme im System.
+Wird die Spannung zu kurz getrennt beim aus/anschalten, kann ebenfalls ein Warmstart ausgelöst werden.
+Beim Warmstart werden die Sensoren nicht neu kalibriert, sondern es wird mit gespeicherten Kalibrierdaten
+weitergearbeitet.
+		</TEXT>
+	</ERROR>
+	
+	
+    <ERROR Code="3" Opcode="ERROR_CALIB_FINISH" Type="Info">
+		<TEXT Lang="en"  Short="Calibration Finished">
+At each Coldstart, the sensor and RC Values are calibrated to the actual seen values. If the
+calibration is finished, this message confirms the storage of data into the internal non
+volatile calibration memory
+		</TEXT>
+		<TEXT Lang="de"  Short="Kalibrierung beendet">
+Nachdem Sensor und RC Daten eingelesen und stabilisiert wurden, werden die Daten gespeichert.
+Dieser Vorgang wird mit einem Pitch Zucker und dieser Meldung bestätigt.
+		</TEXT>
+	</ERROR>
+	
+	
+    <ERROR Code="4" Opcode="ERROR_AUTOTRIM_ACTIVATED" Type="Info" >
+		<TEXT Lang="en" Short="Autotrim activated">
+The autotrim Feature has been activated. This results in a double twitch of the Swashplate.
+The autotrim feature stays active, until a new warm/coldstart is done.
+		</TEXT>
+		<TEXT Lang="de" Short="Autotrim aktiviert">
+Der VStabi ist in den Autortim Modus gegangen. Ausgelöst wir der Vorgang durch aktivieren der
+Autotrim Funktion in der Oberfläche, und anschließend dem Einschalten des Helis bei voll Pitch.
+Die Erkennung wird mit zwei Pitch Zuckern und dieser Meldung bestätigt.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="5" Opcode="ERROR_BT_DETECTED" Type="Info">
+		<TEXT Lang="en"  Short="Bluetooth Module Detected">
+The VBar Unis has detected, that a bluetooth module is connected at the control panel port. The
+Bluetooth module will be initialized if it is detected.
+		</TEXT>
+		<TEXT Lang="de"  Short="Bluetooth Modul Erkannt">
+Es wurde die Existenz eines Bluetooth Models am Controlpanel Port erkannt. In diesem Falle wird
+eine Initialisierung des Moduls gestartet
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="6" Opcode="ERROR_BT_INIT_OK" Type="Info">
+		<TEXT Lang="en"  Short="Bluetooth Module Init OK">
+Initzialization of Bluetooth Module succeeded. Bluetooth can be used now
+		</TEXT>
+		<TEXT Lang="de"  Short="Bluetooth Modul Init OK">
+Das Bluetooth Modul wurde erfolgreich initialisiert.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="7" Opcode="ERROR_BT_INIT_ERROR" Type="Warning">
+		<TEXT Lang="en"  Short="Bluetooth Module Init Error">
+During the initialization of the bluetooth module, an error occured. Usually this is no problem, since
+the bluetooth module stores all settings in its local storage. So it may work even when this error occurs.
+If the bluetooth module is connected for the first time to this VBar unit, it probably will not work.
+Usually repeating the power cyclce is enough to fix the problem.
+		</TEXT>
+		<TEXT Lang="de"  Short="Bluetooth Modul Fehler">
+Die Initialisierung des Bluetooth Modules ist fehlgeschlagen. Das bedeutet nicht, das das Modul nicht
+funktioniert, denn das Modul speichert die Einstellungen selbstständig, und im Falle eines Fehlers werden
+die gespeciherten Einstellungen aktiviert.
+		</TEXT>
+	</ERROR>
+	
+    <ERROR Code="20" Opcode="ERROR_SENSOR_DATA_LOST" Type="Critical">
+		<TEXT Lang="en"  Short="Sensor Connection broken">
+Data is transmitted in very short sequence from the sensor. The packets arrive multiple times
+each frame. This Error is issued, if in a time of 50ms no Data packets did arrive. This is
+probably a total lost of the sensor connection. In this case, the VBar goes into emergency mode,
+where control is still possible, but there is no more additional stability from the sensors.
+The Throw is halfed, to calm down the control a bit and make a landing possible.
+		</TEXT>
+		<TEXT Lang="de"  Short="Sensor Verbindung gestört">
+Die Datenübertragung vom Sensor zur Zentraleinheit erfolgt mit hoher Übertragunsrate und in sehr
+kurzen Abständen. Wenn für eine gewisse Zeit keine Daten vom Sensor eintreffen, wird dieser Fehler
+gemeldet. VSTabi geht dabei in einen Emergency Mode, in dem die Steuerung der Funktionen weiterhin
+möglich ist, um eine Landung zu ermöglichen. Die Steuerwege werden halbiert um eine nutzbare Reaktion
+sicherzustellen.
+		</TEXT>
+	</ERROR>
+    <ERROR Code="21" Opcode="ERROR_SENSOR_CHECKSUM" Type="Warning">
+		<TEXT Lang="en"  Short="Sensor Data Checksum Error">
+Each Data packed from the sensor carries a checksum. If this checksum does not match with the
+calculated checksum, this error is thrown. Since packets are repeated very fast, this is not
+a complete control lost. The sensor data is going to hold until a valid checkum is calculated.
+This error pints to some wiring problems of the sensor. It also may occur if static discharges
+hit the sensor or the connection to the sensor.
+		</TEXT>
+		<TEXT Lang="de"  Short="Sensor Prüfsummen Fehler">
+Jedes Datenpaket vom Sensor ist mit einer Prüfsumme versehen. Stimmt diese Summe nicht
+überein, ist während der Übertragung ein Bitfehler aufgetreten. In elektrostatisch gestörter
+Umgebung kann das gelegentlich vorkommen, jedoch sollte man die Verkabelung und die Erdung
+des Helis überprüfen. Bei seltenem Auftreten ist nicht mit einer Störung der Steuerung zu rechnen.
+		</TEXT>
+		
+	</ERROR>
+
+    <ERROR Code="22" Opcode="ERROR_INIT_FAILED_RETRY" Type="Warning">
+		<TEXT Lang="en"  Short="Init Failed, retrying...">
+The Init process of the sensors is very sensitive to movements of the heli or from other external
+disturbances, i.e. Voltage jumps and glitches. This can lead to a failed initialization. In this Case
+it is repeated. If this repeats itself all the time, this can point to a defective sensors. 
+		</TEXT>
+		<TEXT Lang="de"  Short="Initialisierung wird wiederholt...">
+Während des Einschaltvorgangs wird der Sensor in der Nullage eingemessen. Dazu muß der Heli für ein
+paar Sekunden unbeweglich sein. Sollte der Einmessvorgang wegen zu großer Abweichungen scheitern, 
+wird die Initialisierung wiederholt. Dies passiert vor allem dann, wenn der Heli während des
+Vorganges unabsichtlich bewegt wird. Tritt der Fehler immer wieder auf, kann das auf einen defekten
+Sensor hinweisen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="23" Opcode="ERROR_PC_CHECK_SUM_ERROR" Type="Warning">
+		<TEXT Lang="en"  Short="Check Sum Error on PC Data">
+The Connection to the pc is protected witn an checksum. If the checksum is missed, this error is raised.
+This can happen on start of the pc communication sometimes, and then is no problem. If this error
+occures repeditly it may point to a problem with the wiring to the pc
+		</TEXT>
+		<TEXT Lang="de"  Short="Prüfsummenfehler bei der PC Schnittstelle">
+Auch die Schnittstelle zum PC wird mit Prüfsummen gesichert. Gehen Bits verloren, so wird das erkannt
+und hier gemeldet. Beim Ein/ausschalten oder beim Ab/Anstecken oder Reset des Gerätes kann das gelegentlich
+vorkommen. Im Laufenden Betrieb deutet der Fehler auf defekte Kabel oder fehlerhafte Treiber auf der PC Seite hin.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="24" Opcode="ERROR_RC_REC_DATA_OVERRUN" Type="Critical">
+		<TEXT Lang="en"  Short="Input Queue Overrun on RC Data">
+Data that is recived from the Sattelite reciver is propagated through a queue of sufficient length. If for
+some reason there are more entrys than expected, this overrun is raised. It can happen if the sattelite
+produces data jam or a sattelite with too high update rate is used. This shall not happen in normal
+operation, operation is not permitted, if this error occures.
+		</TEXT>
+		<TEXT Lang="de"  Short="Digital Empfänger Daten Überlauf">
+Digitale Empfänger liefern einen Datenstrom, der extrem zeitnah im VStabi verarbeitet wird. Sollten deutlich
+mehr Daten eintreffen, als erwartet, kann es zum Überlauf kommen. In diesem Falle werden einzelne Datensätze ignoriert.
+Normalerweise kann das nur passieren, wenn der Empfänger oder Satellit mehr Daten produziert als normal,
+also z.B. wenn die Empfänger interne CPU eine Störung hat. Sollte dieser Fehler auftreten darf nicht
+mehr geflogen werden, der Service is zu benachrichtigen.
+		</TEXT>
+		
+	</ERROR>
+
+    <ERROR Code="25" Opcode="ERROR_RC_REC_TIMER_OVERRUN" Type="Critical">
+		<TEXT Lang="en"  Short="Input Queue Overrun on RC Timer">
+Data that is recived from the Single Line reciver is propagated through a queue of sufficient length. If for
+some reason there are more entrys than expected, this overrun is raised. It can happen if the sattelite
+produces data jam or a sattelite with too high update rate is used. This shall not happen in normal
+operation, operation is not permitted, if this error occures.
+		</TEXT>
+		<TEXT Lang="de"  Short="Single Line Empfänger Daten Überlauf">
+Digitale Empfänger liefern einen Datenstrom, der extrem zeitnah im VStabi verarbeitet wird. Sollten deutlich
+mehr Daten eintreffen, als erwartet, kann es zum Überlauf kommen. In diesem Falle werden einzelne Datensätze ignoriert.
+Normalerweise kann das nur passieren, wenn der Empfänger oder Satellit mehr Daten produziert als normal,
+also z.B. wenn die Empfänger interne CPU eine Störung hat. Sollte dieser Fehler auftreten darf nicht
+mehr geflogen werden, der Service is zu benachrichtigen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="26" Opcode="ERROR_INPUT_SINGLE_LINE_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="Single Line Reciver delivers invalid input">
+The Pulsewidth of a Pulse in Single Line Mode is monitored. If a certain Limit is exceeded, this
+Error is raised. This can happen in operational mode, if the signal from the reciver is damaged
+or strong fields influence the slopes of the signal.
+		</TEXT>
+		<TEXT Lang="de"  Short="Single Line Reciver liefert ungültiges Signal">
+Ein Single Lien Empfänger sollte stets Impulse liefern, die im gültigen Bereich liegen. Dieser
+Fehler wird gemeldet, wenn das nicht der Fall ist. Sollte es gelegentlich vorkommen, ist die
+Verbindung zwischen Empfänger und VStabi zu überprüfen. Bei 35Mhz Empfängern deutet dieser
+Fehler auf ein Empfangsproblem hin.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="27" Opcode="ERROR_CYCLIC_RING_ACTIVE" Type="Warning" >
+		<TEXT Lang="en" Short="The Cyclic Ring is active">
+If the agility of a Heli is set to the possibilities of the mechanic and aerodynamic limits, this did not
+happen. However in 3D Flying the agility cannot set high enough to fullfill the pilots needs. So this
+limiter is in action dependant on the flwon actions. If it is active very often, there is a potential
+problem with the mechanics. Using lighter blades will help increasing the natural agility preventing
+hitting the cyclic ring all the time.
+		</TEXT>
+		<TEXT Lang="de" Short="The Cyclic Ring ist aktiv">
+Der Cyclic Ring limitiert die Wege die die Taumelscheibe fahren darf. Sollten diese nicht ausreichen,
+tritt der Ring in Aktion und begrenzt auf ein Maximum. Dieser Fehler tritt nur auf, wenn das Maximum
+weit überschritten wird >150%. Sollte das häufig passieren, ist die Heli Abstimmung so anzupassen,
+das der Heli wendiger wird: Leichtere Blätter, mehr zyklscher Ausschlag.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="28" Opcode="ERROR_CYCLIC_RING_TOUCHED" Type="Info">
+		<TEXT Lang="en"  Short="The Cyclic Ring is touched">
+The Cyclic Ring is touched. This is a normal behaviour in 3D Flight. It shows, that the mechanical Limts are
+reached. In this case the Optimizer is disabled since the control loop cannot act freely. If higher Rates are
+requested, they cannot be realized. Try to increase the Cyclic Ring to avoid this if possible.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="29" Opcode="ERROR_RC_REC_DATA_PACKET_SIZE" Type="Info">
+		<TEXT Lang="en"  Short="Satellite Data out of synchronization">
+The connection to the satellites has to be resynchronized after some packet losses
+		</TEXT>
+		<TEXT Lang="de"  Short="Paket vom Satelliten außerhalb Synchronisation">
+Die Datenverbindung zu den Satelliten muß neu synchronisiert werden nach längererm Paketverlust
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="55" Opcode="ERROR_RC_REC_RECEIVE_ERROR" Type="Info">
+		<TEXT Lang="en"  Short="Satellite Data out of synchronization">
+The connection to the Satellites has to be resynchronized after some packet losses
+		</TEXT>
+		<TEXT Lang="de"  Short="Paket vom Satelliten außerhalb Synchronisation">
+Die Datenverbindung zu den Satelliten muß neu synchronisiert werden nach längererm Paketverlust
+		</TEXT>
+	</ERROR>
+
+	
+    <ERROR Code="8" Opcode="ERROR_ANTENNA_SWITCH" Type="Info">
+		<TEXT Lang="en"  Short="Antenna Switched">
+The Signal from one of the sattelites was missing. The Main reciver is switched over to the
+other connector. In Case of a single reciver connected, one frame was lost.
+		</TEXT>
+		<TEXT Lang="de"  Short="Antenne umgeschaltet">
+Es wurde ein Datensatz von einem Satelliten vermisst. In diesem Falle wird auf den zweiten Satelliten
+umgeschaltet. Falls nur ein Satellit angeschlossen ist, ging ein Frame verloren. Tritt das häufiger auf,
+ist die Antennenpositionierung zu optimieren. Gelegentliches Umschalten im Flug ist normal.
+		</TEXT>
+	</ERROR>
+    
+	<ERROR Code="9" Opcode="ERROR_EEPROM_WRITE_QUEUE_OVERRUN" Type="Critical">
+		<TEXT Lang="en"  Short="EEprom Write Queue overrun">
+Internal Software Failure. Some Nonvolatile Data cannot be stored in internal Memorys.
+		</TEXT>
+		<TEXT Lang="de"  Short="EEprom Schreibfehler">
+Interner Softwarefehler. Aufgrund eines Überlaufes können nicht alle Daten permanent gespeichtert werden.
+		</TEXT>
+	</ERROR>
+
+	
+    <ERROR Code="10" Opcode="ERROR_LOW_VOLTAGE_33" Type="Critical">
+		<TEXT Lang="en"  Short="Low Voltage of 3.3V Rail">
+The Controller is no longer able to perform reliable IO Operations. This is not necassary the reason
+for a complete reset, but this is a strong hint to take a close look at the power supply. This shall
+not happen in flight. If you see this error, the problem has to be fixed before the next flight.
+		</TEXT>
+		<TEXT Lang="de"  Short="Interne 3.3V Spannung unterschritten">
+Der Prozessor wird mit 3.3V Spannung versorgt. Diese Spannung kann aufgrund zu geringer Eingangsspannung
+nicht mehr aufrecht erhalten werden. Der Fehler führt noch nicht zwangsläufig zu Funktionsausfällen, jedoch
+ist es allerhöchste Zeit einen Blick auf die Stromversorgung zu werfen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="11" Opcode="ERROR_LOW_VOLTAGE_25" Type="Critical">
+		<TEXT Lang="en"  Short="Low Voltage of 2.5V Rail">
+The Voltae is to small, to let the controller run safely. This error will appear only very seldom,
+because it is followed by a reset after a few milliseconds. This time will not be sufficient to store
+the error in the error storage flash area.
+		</TEXT>
+		<TEXT Lang="de"  Short="Low Voltage of 2.5V Rail">
+Der innere Kern des Prozessors wird nicht mehr mit ausreichend Spannung verorgt. Hier kann es zu
+Ausfällen von Funktionen kommen. Fliegen ist nur noch nach Reperatur der defekten Stromversorgung
+zulässig.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="12" Opcode="ERROR_RESET_WATCHDOG" Type="Warning">
+		<TEXT Lang="en" Short="Reset Reason: Watchdog" >
+The Watchdow monitors the proper execution of the main software routine. Usually this error shall not happen,
+but in the situation of a manual coldstart with the userinterface this is a normal message. However
+in normal operation the occurence of an watchdog reset can be caused by a massive electrostatic
+discharge event, or extreme magentic fields.
+		</TEXT>
+		<TEXT Lang="de" Short="Reset Grund: Watchdog" >
+Ein "Watchdog" ist eine Einheit, die die korrekte Funktion der Software sicherstellt. Der Wachhund reagiert,
+sobald die Software nicht mehr die normale Funktion zeigt. Die Reaktion ist ein Reset.
+Man kann diesen Reset absichtlich auslösen, indem auf "Kaltstart" im Userinterface geklickt wird. Hier
+wird der Watchdog bewusst dafür eingesetzt den Reset auszulösen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="13" Opcode="ERROR_RESET_EXTERNAL" Type="Warning">
+		<TEXT Lang="en" Short="Reset Reason: External" >
+An external reset shall not happen. The respective pin is tied to fixed supply.
+		</TEXT>
+		<TEXT Lang="de" Short="Reset Grund: Extern" >
+Ein externer Reset soltle nicht auftreten, da die entsprechende Leitung deaktiviert ist.
+		</TEXT>
+	</ERROR>
+	
+    <ERROR Code="14" Opcode="ERROR_RESET_POWER_ON" Type="Good">
+		<TEXT Lang="en"  Short="Reset Reason: Power On">
+This happens if power is applied to the VBar unit. Usually this is ok, but it shall never happen
+in operational mode. So if a reset happens during flight, this points to a power problem. During
+flight the power on reset results in a warmstart. If a coldstart happens during flight, the power 
+loss was more than 5 Seconds
+		</TEXT>
+		<TEXT Lang="de"  Short="Reset Grund: Power On">
+Die Ursache des aktuellen Starts ist das Einschalten der Stromversorgung. Das ist beim normalen
+Einschaltvorgang normal und beabsichtigt. Tritt es während des laufenden Betriebes auf, dann wurde
+eine Unterbrechung der Stromversorgung für mehr als 5 Sekunden festgestellt. In diesem Falle ist
+die Stromversorgung zu überprüfen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="15" Opcode="ERROR_BANK_SWITCHED_BANK0" Type="Info">
+		<TEXT Lang="en"  Short="Bank 0 Loaded">
+Bank 0 was loaded from the non volatile memory. This can be triggered my manual backswitch from the
+userinterface as well as in flight if bank switch is programmed to the aux channel. On Startup the Bank 0
+is loaded by default.
+		</TEXT>
+		<TEXT Lang="de"  Short="Bank 0 geladen">
+Die Parameterbank 0 wurde aus dem nicht flüchtigen Speicher geladen und damit aktiviert. Beim
+Einschalten wird immer zuerst die Bank 0 geladen, bevor je nach Einstellungen eine andere Bank
+geladen wird.
+		</TEXT>
+	</ERROR>
+	
+    <ERROR Code="16" Opcode="ERROR_BANK_SWITCHED_BANK1" Type="Info">
+		<TEXT Lang="en"  Short="Bank 1 Loaded">
+Bank 1 was loaded from the non volatile memory. This can be triggered my manual bankswitch from the
+userinterface as well as in flight if bank switch is programmed to the aux channel.
+		</TEXT>
+		<TEXT Lang="de"  Short="Bank 1 geladen">
+Die Parameterbank 1 wurde aus dem nicht flüchtigen Speicher geladen und damit aktiviert.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="17" Opcode="ERROR_BANK_SWITCHED_BANK2" Type="Info">
+		<TEXT Lang="en"  Short="Bank 2 Loaded">
+Bank 2 was loaded from the non volatile memory. This can be triggered my manual bankswitch from the
+userinterface as well as in flight if bank switch is programmed to the aux channel.
+		</TEXT>
+		<TEXT Lang="de"  Short="Bank 2 geladen">
+Die Parameterbank 2 wurde aus dem nicht flüchtigen Speicher geladen und damit aktiviert.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="18" Opcode="ERROR_BANK_SWITCHED_BANK3" Type="Info">
+		<TEXT Lang="en"  Short="Bank 3 Loaded">
+Bank 3 was loaded from the non volatile memory. This can be triggered my manual bankswitch from the
+userinterface as well as in flight if bank switch is programmed to the aux channel.
+		</TEXT>
+		<TEXT Lang="de"  Short="Bank 3 geladen">
+Die Parameterbank 3 wurde aus dem nicht flüchtigen Speicher geladen und damit aktiviert.
+		</TEXT>
+	</ERROR>
+	
+    <ERROR Code="30" Opcode="ERROR_INPUT_PITCH_MISSED" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Pitch Channel missed">
+The Pitch Input Signal ist updated with each Frame recived from the reciver. This Error is raised, if
+for 50ms no new signal arrives from the reciver. Depending on the hardware connection this can point to
+a problem with the connection to the reciver/sattelite. In case of sattelite recivers used, all channels
+will be accused at the same time. In case of single channels, this can happen seperately on each channel.
+Closely check your wiring for broken wires or connection problems
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Eingangssignal Pitch fehlt">
+In den letzten 50 Millisekunden ist keine Aktualisierung für dieses Eingangssignal eingegangen. Entweder
+ist eine Verbindung zum Empfänger gestört, oder der Empfänger selbst liefert keine Informationen mehr.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="31" Opcode="ERROR_INPUT_AILERON_MISSED" Type="Critical" >
+		<TEXT Lang="en" Short="RC Input of Aileron Channel missed">
+The Aileron Input Signal ist updated with each Frame recived from the reciver. This Error is raised, if
+for 50ms no new signal arrives from the reciver. Depending on the hardware connection this can point to
+a problem with the connection to the reciver/sattelite. In case of sattelite recivers used, all channels
+will be accused at the same time. In case of single channels, this can happen seperately on each channel.
+Closely check your wiring for broken wires or connection problems
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Eingangssignal Roll fehlt">
+In den letzten 50 Millisekunden ist keine Aktualisierung für dieses Eingangssignal eingegangen. Entweder
+ist eine Verbindung zum Empfänger gestört, oder der Empfänger selbst liefert keine Informationen mehr.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="32" Opcode="ERROR_INPUT_ELEVATOR_MISSED" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Elevator Channel missed">
+The Elevator Input Signal ist updated with each Frame recived from the reciver. This Error is raised, if
+for 50ms no new signal arrives from the reciver. Depending on the hardware connection this can point to
+a problem with the connection to the reciver/sattelite. In case of sattelite recivers used, all channels
+will be accused at the same time. In case of single channels, this can happen seperately on each channel.
+Closely check your wiring for broken wires or connection problems
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Eingangssignal Nick fehlt">
+In den letzten 50 Millisekunden ist keine Aktualisierung für dieses Eingangssignal eingegangen. Entweder
+ist eine Verbindung zum Empfänger gestört, oder der Empfänger selbst liefert keine Informationen mehr.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="33" Opcode="ERROR_INPUT_TAIL_MISSED" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Tail Channel missed">
+The Tail Input Signal ist updated with each Frame recived from the reciver. This Error is raised, if
+for 50ms no new signal arrives from the reciver. Depending on the hardware connection this can point to
+a problem with the connection to the reciver/sattelite. In case of sattelite recivers used, all channels
+will be accused at the same time. In case of single channels, this can happen seperately on each channel.
+Closely check your wiring for broken wires or connection problems
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Eingangssignal Heck fehlt">
+In den letzten 50 Millisekunden ist keine Aktualisierung für dieses Eingangssignal eingegangen. Entweder
+ist eine Verbindung zum Empfänger gestört, oder der Empfänger selbst liefert keine Informationen mehr.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="34" Opcode="ERROR_INPUT_AUX_MISSED" Type="Critical" >
+		<TEXT Lang="en" Short="RC Input of AUX Channel missed">
+The AUX Input Signal ist updated with each Frame recived from the reciver. This Error is raised, if
+for 50ms no new signal arrives from the reciver. Depending on the hardware connection this can point to
+a problem with the connection to the reciver/sattelite. In case of sattelite recivers used, all channels
+will be accused at the same time. In case of single channels, this can happen seperately on each channel.
+Closely check your wiring for broken wires or connection problems. The aux channel is monitored only in
+case it is used by the bank selekt switch
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Eingangssignal Aux fehlt">
+In den letzten 50 Millisekunden ist keine Aktualisierung für dieses Eingangssignal eingegangen. Entweder
+ist eine Verbindung zum Empfänger gestört, oder der Empfänger selbst liefert keine Informationen mehr.
+Dieser Fehler tritt nur auf, wenn der Aux Kanal in Benutzung ist.
+		</TEXT>
+	</ERROR>
+	
+    <ERROR Code="40" Opcode="ERROR_INPUT_CHANNEL1_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Channel 1 out of Range">
+Channel 1 actively recived a Signal that is out of the specified Signal range of 0.8ms .. 2.2ms. These
+Signals are ignored, but point to a serious problem with the configuration. Make sure you never leave
+the valid signal range of the inputs. Invalid inputs will trigger the missing signal error as well, because
+there is no usable signal anymore. This has to be done in this way, because bad connections tend to create
+invalid signals because of glitches.
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Kanal 1 Signal ungültig">
+Signale, die am VStabi ankommen, müssen eine Pulsbreite von 0.8 bis 2.2 Millisekunden aufweisen. Wenn
+der Bereich verlassen wird, wird das Signal als ungültig verworfen, und dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="41" Opcode="ERROR_INPUT_CHANNEL2_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Channel 2 out of Range">
+Channel 2 actively recived a Signal that is out of the specified Signal range of 0.8ms .. 2.2ms. These
+Signals are ignored, but point to a serious problem with the configuration. Make sure you never leave
+the valid signal range of the inputs. Invalid inputs will trigger the missing signal error as well, because
+there is no usable signal anymore. This has to be done in this way, because bad connections tend to create
+invalid signals because of glitches.
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Kanal 2 Signal ungültig">
+Signale, die am VStabi ankommen, müssen eine Pulsbreite von 0.8 bis 2.2 Millisekunden aufweisen. Wenn
+der Bereich verlassen wird, wird das Signal als ungültig verworfen, und dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="42" Opcode="ERROR_INPUT_CHANNEL3_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Channel 3 out of Range">
+Channel 3 actively recived a Signal that is out of the specified Signal range of 0.8ms .. 2.2ms. These
+Signals are ignored, but point to a serious problem with the configuration. Make sure you never leave
+the valid signal range of the inputs. Invalid inputs will trigger the missing signal error as well, because
+there is no usable signal anymore. This has to be done in this way, because bad connections tend to create
+invalid signals because of glitches.
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Kanal 3 Signal ungültig">
+Signale, die am VStabi ankommen, müssen eine Pulsbreite von 0.8 bis 2.2 Millisekunden aufweisen. Wenn
+der Bereich verlassen wird, wird das Signal als ungültig verworfen, und dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="43" Opcode="ERROR_INPUT_CHANNEL4_OUT_OF_RANGE" Type="Critical" >
+		<TEXT Lang="en" Short="RC Input of Channel 4 out of Range">
+Channel 4 actively recived a Signal that is out of the specified Signal range of 0.8ms .. 2.2ms. These
+Signals are ignored, but point to a serious problem with the configuration. Make sure you never leave
+the valid signal range of the inputs. Invalid inputs will trigger the missing signal error as well, because
+there is no usable signal anymore. This has to be done in this way, because bad connections tend to create
+invalid signals because of glitches.
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Kanal 4 Signal ungültig">
+Signale, die am VStabi ankommen, müssen eine Pulsbreite von 0.8 bis 2.2 Millisekunden aufweisen. Wenn
+der Bereich verlassen wird, wird das Signal als ungültig verworfen, und dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="44" Opcode="ERROR_INPUT_CHANNEL5_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="RC Input of Channel 5 out of Range">
+Channel 5 actively recived a Signal that is out of the specified Signal range of 0.8ms .. 2.2ms. These
+Signals are ignored, but point to a serious problem with the configuration. Make sure you never leave
+the valid signal range of the inputs. Invalid inputs will trigger the missing signal error as well, because
+there is no usable signal anymore. This has to be done in this way, because bad connections tend to create
+invalid signals because of glitches.
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Kanal 5 Signal ungültig">
+Signale, die am VStabi ankommen, müssen eine Pulsbreite von 0.8 bis 2.2 Millisekunden aufweisen. Wenn
+der Bereich verlassen wird, wird das Signal als ungültig verworfen, und dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="45" Opcode="ERROR_INPUT_CHANNEL6_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en" Short="RC Input of Channel 6 out of Range">
+Channel 6 actively recived a Signal that is out of the specified Signal range of 0.8ms .. 2.2ms. These
+Signals are ignored, but point to a serious problem with the configuration. Make sure you never leave
+the valid signal range of the inputs. Invalid inputs will trigger the missing signal error as well, because
+there is no usable signal anymore. This has to be done in this way, because bad connections tend to create
+invalid signals because of glitches.
+		</TEXT>
+		<TEXT Lang="de"  Short="RC Kanal 6 Signal ungültig">
+Signale, die am VStabi ankommen, müssen eine Pulsbreite von 0.8 bis 2.2 Millisekunden aufweisen. Wenn
+der Bereich verlassen wird, wird das Signal als ungültig verworfen, und dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="255" Opcode="ERROR_END_OF_LIST" Type="Info">
+		<TEXT Lang="en"  Short="-- List End --">
+End of Event List
+		</TEXT>
+		<TEXT Lang="de"  Short="-- Liste Ende --">
+Ende der Ereignisliste
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="50" Opcode="ERROR_TESTMODE_STARTED" Type="Info">
+		<TEXT Lang="en"  Short="Testmode Started">
+The testmode ist entered intentionally by the user with the command on a Controlpanel or any other control
+terminal. The Entering command is checksum tested, so it cannot happen accidentially. In Testmode the normal
+control loop algorithm is not running, so its important to leave the Testmode prior flight. Its only can
+happen to fly in testmode with bluetooth.
+		</TEXT>
+		<TEXT Lang="de"  Short="Testmode Aktiviert">
+Die normale Regelfunktion wurde beendet, und der Testmode aktiviert. Diese dient zum Justieren der
+Servos und Mechanik.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="51" Opcode="ERROR_TESTMODE_TIMEOUT" Type="Info">
+		<TEXT Lang="en"  Short="Testmode Timeout">
+The Connection to the Control Unit was interrupted. If for about 2 seconds there is no more data arriving
+from the control device, the testmode is deactivated automatically. This prevents from flying in testmode.
+		</TEXT>
+		<TEXT Lang="de"  Short="Testmode Timeout">
+Der VSTabi hat bemerkt, das während des Testbetriebes die Verbindung zum PC oder der Bedieneinheit
+verloren gegangen ist (z.B. abgesteckt). Zur Sicherheit wird nach 2 Sekunden in den Normalbetrieb gewechselt.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="52" Opcode="ERROR_TESTMODE_ENDED" Type="Info">
+		<TEXT Lang="en"  Short="Testmode Ended">
+Testmode has been switched off intentinally. Normal control loop is in action now
+		</TEXT>
+		<TEXT Lang="de"  Short="Testmode Beendet">
+Der Testmode wurde ordnungsgemäß beendet. Die Regelung arbeitet wieder normal.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="60" Opcode="ERROR_RAISED_VIBRATIONS" Type="Info">
+		<TEXT Lang="en"  Short="Raised Vibration Level">
+There was detected a raised level of Vibration. Since the vibration detector has to decide which
+signal is vibration and chis is the intended measurement signal, this can happen sometimes on hard
+3d moves. It shall not happen all the time. If this error is reported repedidtly very often, check
+the heli for vibration sources.
+		</TEXT>
+		<TEXT Lang="de"  Short="Erhöhtes Vibrationsniveau">
+Die Vibrationserkennung stellt ein erhöhtes Vibrationsniveau fest. Dies kommt vor, und ist kein
+Grund zur Sorge. Sollte der Fehler aber während des Fluges permanent gemeldet werden, können die
+Flugeigenschaften verbessert werden, indem die Vibrationen reduziert werden.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="61" Opcode="ERROR_HIGH_VIBRATIONS" Type="Warning">
+		<TEXT Lang="en"  Short="High Vibration Level">
+The control loop suffers from a high vibration level, that starts to render the sensors blind. Save
+flying is possible, but the stability will be degraded. Additinally slow drifts that happen may
+be caused by vibrations.
+		</TEXT>
+		<TEXT Lang="de"  Short="Starke Vibration">
+Die Regelung kann unter diesen Vibrationsbedingungen nicht mehr optimal arbeiten. Man beginnt
+Drift zu bemerken, und der Schwebeflug wird unruhig. Gelegentliches Auftreten der Meldung ist
+kein Problem, bei häufigem Auftreten sollten Maßnahmen zur Vibrationsreduktion ergriffen werden.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="62" Opcode="ERROR_EXTREME_VIBRATIONS" Type="Critical">
+		<TEXT Lang="en"  Short="Extreme Vibration Level">
+Vibrations are extreme. That means, that the measurement signal is much lower than the signal level
+of the vibrations. No usable flying is possible with this level. Everything has to be checked and
+extended tests are needed to isolate and eliminate the source of vibrations
+		</TEXT>
+		<TEXT Lang="de"  Short="Gefährliche Vibrationen">
+Der Eingangsfilter kann das Nutzsignal in den Vibrationen nicht mehr erkennen. Ein sporadisches Auftreten
+dieses Fehlers ist bei harter Flugweise möglich und nur in diesem Falle unbedenklich. Ansonsten ist dieses
+Vibrationsniveau unbedingt zu vermeiden. Eine Suche nach der Ursache und deren Beseitugung is unbedingt erforderlich
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="70" Opcode="ERROR_AILERON_RC_INIT_VALUE_AMBIGUOUS" Type="Warning" >
+		<TEXT Lang="en" Short="Ambiguous Value on Aileron RC Channel at Init">
+The Centeres of all Channels are learned at startup in case of an Coldstart. The Sticks shall be centered in this case.
+If the measured Value for the center is too far off, this Warning is issued. Check the Centers of your Transmitter
+settings (Trims) and verify them in the transmitter calibration panel of the software
+		</TEXT>
+		<TEXT Lang="de" Short="Abnormaler Ruhewert des Roll RC Kanals">
+Der beim Einschalten als Nullstellung eingelernte Wert des Empfängers ist außerhalb des üblichen Bereiches. Möglicherweise
+sind Mischer auf dem Kanal programmiert, oder die Trimmung sehr weit verschoben.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="71" Opcode="ERROR_ELEVATOR_RC_INIT_VALUE_AMBIGUOUS" Type="Warning" >
+		<TEXT Lang="en" Short="Ambiguous Value on Elevator RC Channel at Init" >
+The Centeres of all Channels are learned at startup in case of an Coldstart. The Sticks shall be centered in this case.
+If the measured Value for the center is too far off, this Warning is issued. Check the Centers of your Transmitter
+settings (Trims) and verify them in the transmitter calibration panel of the software
+		</TEXT>
+		<TEXT Lang="de" Short="Abnormaler Ruhewert des Nick RC Kanals">
+Der beim Einschalten als Nullstellung eingelernte Wert des Empfängers ist außerhalb des üblichen Bereiches. Möglicherweise
+sind Mischer auf dem Kanal programmiert, oder die Trimmung sehr weit verschoben.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="72" Opcode="ERROR_TAIL_RC_INIT_VALUE_AMBIGUOUS" Type="Warning">
+		<TEXT Lang="en"  Short="Ambiguous Value on Tail RC Channel at Init">
+The Centeres of all Channels are learned at startup in case of an Coldstart. The Sticks shall be centered in this case.
+If the measured Value for the center is too far off, this Warning is issued. Check the Centers of your Transmitter
+settings (Trims) and verify them in the transmitter calibration panel of the software
+		</TEXT>
+		<TEXT Lang="de" Short="Abnormaler Ruhewert des Heck RC Kanals">
+Der beim Einschalten als Nullstellung eingelernte Wert des Empfängers ist außerhalb des üblichen Bereiches. Möglicherweise
+sind Mischer auf dem Kanal programmiert, oder die Trimmung sehr weit verschoben.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="73" Opcode="ERROR_AILERON_SENSOR_INIT_VALUE_AMBIGUOUS" Type="Critical">
+		<TEXT Lang="en"  Short="Ambiguous Value on Aileron Sensor at Init">
+The Sensors are calibrated to their centers at each startup. Thsi gives a center value depending on some serial
+deviation, but they shall stay in 10% of the ideal center. If this is not met, the sensor may be defective.
+Check the Live display of the sensor for visible deviation. Even it is is possible to fly with a decentered
+sensor, it is recommended to contact the support
+		</TEXT>
+		<TEXT Lang="de" Short="Abnormaler Ruhewert des Roll Sensors">
+Während der Initialisierung wird der Ruhewert des Sensors eingemessen. Sollte der Ruhewert ungewöhnliche Abweichungen zeigen,
+wird dieser Fehler ausgegeben. Er könnte auf einen defekten Sensor hinweisen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="74" Opcode="ERROR_ELEVATOR_SENSOR_INIT_VALUE_AMBIGUOUS" Type="Critical">
+		<TEXT Lang="en"  Short="Ambiguous Value on Elevator Sensor at Init">
+The Sensors are calibrated to their centers at each startup. Thsi gives a center value depending on some serial
+deviation, but they shall stay in 10% of the ideal center. If this is not met, the sensor may be defective.
+Check the Live display of the sensor for visible deviation. Even it is is possible to fly with a decentered
+sensor, it is recommended to contact the support
+		</TEXT>
+		<TEXT Lang="de" Short="Abnormaler Ruhewert des Nick Sensors">
+Während der Initialisierung wird der Ruhewert des Sensors eingemessen. Sollte der Ruhewert ungewöhnliche Abweichungen zeigen,
+wird dieser Fehler ausgegeben. Er könnte auf einen defekten Sensor hinweisen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="75" Opcode="ERROR_TAIL_SENSOR_INIT_VALUE_AMBIGUOUS" Type="Critical">
+		<TEXT Lang="en"  Short="Ambiguous Value on Tail Sensor at Init">
+The Sensors are calibrated to their centers at each startup. Thsi gives a center value depending on some serial
+deviation, but they shall stay in 10% of the ideal center. If this is not met, the sensor may be defective.
+Check the Live display of the sensor for visible deviation. Even it is is possible to fly with a decentered
+sensor, it is recommended to contact the support
+		</TEXT>
+		<TEXT Lang="de" Short="Abnormaler Ruhewert des Heck Sensors">
+Während der Initialisierung wird der Ruhewert des Sensors eingemessen. Sollte der Ruhewert ungewöhnliche Abweichungen zeigen,
+wird dieser Fehler ausgegeben. Er könnte auf einen defekten Sensor hinweisen.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="76" Opcode="ERROR_AILERON_SENSOR_VALUE_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="Aileron Sensor Value out of Range">
+The Sensor delivers Values that are not trustful. Rotational rates, that will create this values are usually not possible
+in air. The Sensor may be defective. This can happen in certain cases if the heli is handleled on ground, or on very hard
+landings or very extreme Vibrations.
+		</TEXT>
+		<TEXT Lang="de" Short="Roll Sensor ist außerhalb des Messbereichs">
+Die Sensoren im VStabi haben einen weiten Messbereich, der in normalen Situationen nicht überschritten werden sollte.
+Dieser Fehler ist bei einem Absturz zu beobachten, wenn der Heli am Boden aufschlägt.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="77" Opcode="ERROR_ELEVATOR_SENSOR_VALUE_OUT_OF_RANGE" Type="Critical">
+		<TEXT Lang="en"  Short="Elevator Sensor Value out of Range">
+The Sensor delivers Values that are not trustful. Rotational rates, that will create this values are usually not possible
+in air. The Sensor may be defective. This can happen in certain cases if the heli is handleled on ground, or on very hard
+landings or very extreme Vibrations.
+		</TEXT>
+		<TEXT Lang="de" Short="Nick Sensor ist außerhalb des Messbereichs">
+Die Sensoren im VStabi haben einen weiten Messbereich, der in normalen Situationen nicht überschritten werden sollte.
+Dieser Fehler ist bei einem Absturz zu beobachten, wenn der Heli am Boden aufschlägt.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="78" Opcode="ERROR_AILERON_SENSOR_QUIET" Type="Warning">
+		<TEXT Lang="en"  Short="Aileron Sensor shows no actual Signal">
+This is an plausibility check. If the Heli starts to vibrate, this shall at least have effect to all sensors. If one of the
+Sensors do not show the Signal, it may point to a specific problem, not necassary with this sensor, but a general problem.
+		</TEXT>
+		<TEXT Lang="de" Short="Roll Sensor liefert kein Signal">
+Die Sensoren werden im Betrieb laufend überwacht. Sollte ein Sensor plötzlich kein Signal mehr liefern, wohingegen
+die anderen noch funktionieren, wird dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="79" Opcode="ERROR_ELEVATOR_SENSOR_QUIET" Type="Warning">
+		<TEXT Lang="en"  Short="Elevator Sensor shows no actual Signal">
+This is an plausibility check. If the Heli starts to vibrate, this shall at least have effect to all sensors. If one of the
+Sensors do not show the Signal, it may point to a specific problem, not necassary with this sensor, but a general problem.
+		</TEXT>
+		<TEXT Lang="de" Short="Nick Sensor liefert kein Signal">
+Die Sensoren werden im Betrieb laufend überwacht. Sollte ein Sensor plötzlich kein Signal mehr liefern, wohingegen
+die anderen noch funktionieren, wird dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+    <ERROR Code="80" Opcode="ERROR_TAIL_SENSOR_QUIET" Type="Warning">
+		<TEXT Lang="en"  Short="Tail Sensor shows no actual Signal">
+This is an plausibility check. If the Heli starts to vibrate, this shall at least have effect to all sensors. If one of the
+Sensors do not show the Signal, it may point to a specific problem, not necassary with this sensor, but a general problem.
+		</TEXT>
+		<TEXT Lang="de" Short="Heck Sensor liefert kein Signal">
+Die Sensoren werden im Betrieb laufend überwacht. Sollte ein Sensor plötzlich kein Signal mehr liefern, wohingegen
+die anderen noch funktionieren, wird dieser Fehler gemeldet.
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="81" Opcode="ERROR_LOW_SUPPLY_4_5" Type="Warning">
+		<TEXT Lang="en"  Short="Supply Voltage dropped below 4.5V">
+The Voltage dropped below the given Threshold. This check shows even small drops in the supply voltage. The 4.5 Treshold is
+not yet critical, but may point to some problems in the supply
+		</TEXT>
+		<TEXT Lang="de" Short="Spannungseinbruch unter 4.5V">
+Die Spannungsüberwachung meldet ein Einbruch der Versorgungsspannung unter 4.5V. Normalerweise stellt das kein Problem dar,
+jedoch soltle man sich gedanken machen, ob die Stromversorgung zu verbessern ist
+		</TEXT>
+	</ERROR>
+	
+	<ERROR Code="82" Opcode="ERROR_LOW_SUPPLY_4_0" Type="Critical" >
+		<TEXT Lang="en" Short="Supply Voltage dropped below 4.0V">
+The Voltage dropped below the given Threshold. This check shows even small drops in the supply voltage. This is a critical
+Voltage, that shall not be crossed. There has to be a detailed check what causes this. Check with hard movements on Ground
+if this happens there, Check all situations.
+		</TEXT>
+		<TEXT Lang="de" Short="Spannungseinbruch unter 4.0V">
+Die Spannungsüberwachung meldet ein Einbruch der Versorgungsspannung unter 4.0V. Hier wird es vor allem für
+Servos bereits kritisch. Im Betrieb sollte das nicht passieren, eine Überprüfung der Stromversorgung ist
+erforderlich. Satellitenempfänger können bereits probleme mit der Spannungsversorgung melden.
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="83" Opcode="ERROR_LOW_SUPPLY_3_5" Type="Critical">
+		<TEXT Lang="en"  Short="DANGER!!! Supply Voltage dropped below 3.5V">
+The Voltage dropped below the given Threshold. This check shows even small drops in the supply voltage. Usually at this Voltage
+the 2.4Ghz Gear drops out and takes some time for reconnect. Immediately stop operating this heli and do a ground up check of the
+power supply
+		</TEXT>
+		<TEXT Lang="de" Short="Spannungseinbruch unter 3.5V">
+Die Spannungsüberwachung meldet ein Einbruch der Versorgungsspannung unter 3.5V. Der VStabi funktioniert zwar noch
+normal, jedoch ist das kritisch für Empfänger und das gesamte System. Der Betrieb ist sofort einzustellen bei diesem
+Fehler, und die Ursache zu beseitigen.
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="100" Opcode="ERROR_PROGRAM_MODE" Type="Info">
+		<TEXT Lang="en"  Short="Quick Programming Mode entered (3 Pitch bumps)">
+The Quick Programming mode has been entered. (Not implemented)
+		</TEXT>
+		<TEXT Lang="de" Short="Quick Programmierungs Modus aktiviert (3 Pitch Zucker)">
+Der Schnellprogrammiermodus wurde aktiviert
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="101" Opcode="ERROR_TEMP_CALIB_STARTED" Type="Info">
+		<TEXT Lang="en"  Short="Temperature Calibration has been started">
+Temperature compensation mode is being activated
+		</TEXT>
+		<TEXT Lang="de" Short="Temerparurkalibrierung aktiviert">
+Der Temperatur Kalibriermodus wurde aktiviert
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="102" Opcode="ERROR_TEMP_CALIB_OK" Type="Info">
+		<TEXT Lang="en"  Short="Temperature Calibration has been finished OK">
+The Tmperature compensation has been finished succesffully
+		</TEXT>
+		<TEXT Lang="de" Short="Temerparurkalibrierung erfolgreich">
+Die Temperaturkalibrierung wurde erfolgreich durchgeführt
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="103" Opcode="ERROR_TEMP_CALIB_ERROR" Type="Info">
+		<TEXT Lang="en"  Short="Temperature Calibration has been finished with ERROR">
+The Tmperature compensation has been finished with an error
+		</TEXT>
+		<TEXT Lang="de" Short="Temerparurkalibrierung fehlerhaft">
+Die Temperaturkalibrierung wurde mit einem Fehler beendet.
+		</TEXT>
+	</ERROR>
+
+	
+	<ERROR Code="120" Opcode="ERROR_GOV_MODE_0" Type="Info">
+		<TEXT Lang="en"  Short="Governor OFF">
+Governor switched to mode OFF
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlregler AUS">
+Drehzahlrgeler auf AUS geschaltet
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="121" Opcode="ERROR_GOV_MODE_1" Type="Info">
+		<TEXT Lang="en"  Short="Governor ON">
+Governor switched to mode ON
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlregler AN">
+Drehzahlrgeler auf AN geschaltet
+		</TEXT>
+	</ERROR>
+	
+	<ERROR Code="122" Opcode="ERROR_GOV_MODE_2" Type="Info">
+		<TEXT Lang="en"  Short="Governor Mode Stop">
+Governor switched to mode Stop, Servo to minimum
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlregler Stop">
+Drehzahlregler abgeschaltet, die Servospoition ist Ruhestellung
+		</TEXT>
+	</ERROR>
+	
+	<ERROR Code="124" Opcode="ERROR_GOV_MODE_4" Type="Info">
+		<TEXT Lang="en"  Short="Governor Mode Pitch">
+Governor switched to mode Pitch. Pitch Input is routed to Servo output
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlrgler auf Pitch">
+Drehzahlregler abgeschaltet, die Servospoition wird durch den Pitchkanal bestimmt
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="125" Opcode="ERROR_GOV_MODE_5" Type="Info">
+		<TEXT Lang="en"  Short="Governor Mode Throttlecurve">
+Governor off, the servo moves with the programmed internal throttle curve
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlrgler auf Gaskurve">
+Drehzahlregler abgeschaltet, die Servospoition wird durch die interne Gaskurve bestimmt
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="126" Opcode="ERROR_GOV_MODE_6" Type="Info">
+		<TEXT Lang="en"  Short="Governor Mode Throttle">
+Governor off, the servo moves with the throttle input channel
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlregler auf Gaskanal">
+Drehzahlregler abgeschaltet, die Servospoition wird durch den Gaskanal bestimmt
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="130" Opcode="ERROR_GOV_OVERSHOOT" Type="Warning">
+		<TEXT Lang="en"  Short="Governor Full Throttle">
+The Governour is not able to hold the Headspeed, but there is no more throttle available.
+Check the maximum collective and the power of your engine. This message is issued only if there
+is a massive demand on more energy.
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlregler am Anschlag">
+Der Drehzahlregler benötigt deutlich mehr Leistung, um die angeforderte Drhezahl zu halten.
+Bitte die Pitcheinstellung und die Motoreinstellung überprüfen. Die Meldung wirn nur ausgegeben,
+den starker Leistungsmangel besteht.
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="131" Opcode="ERROR_GOV_SENSOR_FAIL" Type="Info">
+		<TEXT Lang="en"  Short="Governor Sensor no Signal">
+The Sensor does not deliver a usable Signal. This happens if the Rotor does not move, or if the
+Sensor fails during flight.
+		</TEXT>
+		<TEXT Lang="de" Short="Kein Signal vom Drehzahlsensor">
+Der Drehzahlsensor liefert kein Signal mehr. Dies passiert, wenn der Rotor zum Stehen kommt
+oder wenn er während des Fluges ausfallen sollte.
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="132" Opcode="ERROR_GOV_INVALID_SIGNAL" Type="Error">
+		<TEXT Lang="en"  Short="Governor Sensor Signal Failure">
+The Sensor delivers a Signals that has too high frequency. This usually points to
+a defect of the wire or  noise that is coupled into the sensor wire.
+		</TEXT>
+		<TEXT Lang="de" Short="Fehlerhaftes Signal vom Drehzahlsensor">
+Der Drehzahlsensor liefert ein Signal mit zu hoher Frequenz. Das deutet  auf einen
+Wackelkontakt im Sensorkabel oder massive Sörungen hin, die auf das Sensorkabel einwirken.
+		</TEXT>
+	</ERROR>
+
+	<ERROR Code="133" Opcode="ERROR_GOV_LOW_LIMIT" Type="Info">
+		<TEXT Lang="en"  Short="Governor is at Low Throttle Limit">
+There is a defined low limit, that the Governor will not fall below. Ith this Limit is reached, this
+Info Message is issued. The Message is issued once for each touch of the limit. If the limit
+is touched, it means that your headspeed will be higher than programmed.
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlregler ist am unteren Gaslimit">
+Die minimale Gasstellung kann in den Parametern eingestellt werden. Wenn diese Meldung
+erscheint, dann wurde die untere Gasstellung erreicht. Dies führt normalerweise zu einer
+höheren Drehzahl als eingentlich programmiert.
+		</TEXT>
+	</ERROR>
+	<ERROR Code="134" Opcode="ERROR_GOV_SENSOR_GLITCHING" Type="Info">
+		<TEXT Lang="en"  Short="Governor input contains glitches">
+The Input signal of the Governor does not switch safely. It produces some additional
+slopes between on and off state.
+		</TEXT>
+		<TEXT Lang="de" Short="Drehzahlsensor schaltet nicht sicher um">
+Der Sendor vom Drehzahlregler erzeugt Glitches. Also beim Schalten zwischen an und aus des
+Sensors eine Art prellen auftritt. Das Signal wackelt hin und her bevor es sich stabilisiert.		
+		</TEXT>
+	</ERROR>
+	
+</ERRORS>

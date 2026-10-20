@@ -3,6 +3,13 @@ import { ParameterStore } from './model.js';
 import { buildUi, activatePage, nextPage } from './ui.js';
 import { getLang, ensureLang, trShell, trBank } from './i18n.js';
 import { SerialClient } from './serial.js';
+import { installKeypad } from './keypad.js';
+import { isAndroidNative, requestAndroidPermissions, listAndroidBondedDevices, scanAndroidBleDevices } from './android.js';
+import {
+  EVENT_LOG_ALL, EVENT_LOG_RECENT,
+  ensureErrorCatalog, describeError, formatLogTime,
+  applyLogCode, recomputeLogTimes, createEventLog,
+} from './eventlog.js';
 
 const state = {
   config: null,
@@ -21,9 +28,6 @@ const state = {
 
 const el = (id) => document.getElementById(id);
 const pagesRoot = el('pages');
-const connPill = el('connPill');
-const statusLeft = el('statusLeft');
-const statusRight = el('statusRight');
 const bankPill = el('bankPill');
 const modalRoot = el('modalRoot');
 const tooltip = el('tooltip');
@@ -41,11 +45,26 @@ function pageTitle(page) {
   return page.text || page.name || 'Page';
 }
 
+let ioFlashTimer = null;
+
+function flashIo(direction) {
+  const btn = el('btnConnect');
+  if (!btn) return;
+  btn.classList.toggle('io-rx', direction === 'rx');
+  btn.classList.toggle('io-tx', direction === 'tx');
+  if (ioFlashTimer) clearTimeout(ioFlashTimer);
+  ioFlashTimer = setTimeout(() => {
+    btn.classList.remove('io-rx', 'io-tx');
+    ioFlashTimer = null;
+  }, 220);
+}
+
 function addLog(direction, text) {
   const stamp = new Date().toLocaleTimeString();
   state.log.push(`[${stamp}] ${direction.toUpperCase()} ${text}`);
   if (state.log.length > 400) state.log.splice(0, state.log.length - 400);
   if (state.logModal) state.logModal.value = state.log.join('\n');
+  if (direction === 'rx' || direction === 'tx') flashIo(direction);
 }
 
 function sanitizeTooltip(html) {
@@ -227,10 +246,15 @@ function statusDisplay(status, detail = '') {
   };
   const item = map[status] || map['no Connection'];
   const label = trShell(item.label);
-  connPill.className = `conn-pill ${item.cls}`.trim();
-  connPill.textContent = label;
-  statusLeft.textContent = detail ? `${label} - ${detail}` : label;
-  state.connected = status === 'connected' || status === 'busy';
+  const connected = status === 'connected' || status === 'busy';
+  const btn = el('btnConnect');
+  if (btn) {
+    btn.classList.toggle('connected', connected);
+    btn.dataset.status = status;
+    btn.title = detail ? `${label} - ${detail}` : label;
+    btn.setAttribute('aria-label', btn.title);
+  }
+  state.connected = connected;
 }
 
 function onSerialStatus(status, detail) {
@@ -243,7 +267,6 @@ function onSerialStatus(status, detail) {
 function onPageChanged(index) {
   state.lastPage = index;
   const page = state.config.pages[index];
-  statusRight.textContent = `VStabi 5.3.4 - 29.10.2012    ${pageTitle(page)}`;
   if (state.pageMenu) {
     for (const b of state.pageMenu.querySelectorAll('button[data-page]')) {
       b.classList.toggle('active-page', Number(b.dataset.page) === index);
@@ -302,11 +325,11 @@ function showAbout() {
         <img src="assets/ui/logo51_32x32.png" alt="" style="width:48px;height:48px">
         <div>
           <h3 style="margin-top:0">Setup VStabi 5.3.4</h3>
-          <p>Web edition of the legacy VStabi PC setup application.</p>
+          <p>${isAndroidNative() ? 'Android edition of the legacy VStabi PC setup application.' : 'Web edition of the legacy VStabi PC setup application.'}</p>
           <p>Config: <b>${escapeHtml(state.config ? state.config.version : '5.3')}</b><br>
           Pages: ${state.config ? state.config.pages.length : 0}<br>
           Parameters: ${state.config ? state.config.params.length : 0}</p>
-          <p class="hint">The UI, images and parameter formulas are taken from the original install. Bluetooth SPP works through the COM port created by Windows.</p>
+          <p class="hint">The UI, images and parameter formulas are taken from the original install. ${isAndroidNative() ? 'Bluetooth SPP and BLE links are provided by the native Android transport.' : 'Bluetooth SPP works through the COM port created by Windows.'}</p>
         </div>
       </div>`,
     buttons: [{ label: trShell('OK'), primary: true }],
@@ -314,11 +337,16 @@ function showAbout() {
 }
 
 function showHelp() {
-  openModal({
-    title: trShell('Help'),
-    width: 600,
-    body: `
-      <h3>Bluetooth connection</h3>
+  const connectionHelp = isAndroidNative()
+    ? `<h3>Bluetooth connection</h3>
+      <ol>
+        <li>Turn on Bluetooth and pair the VBar/KBar module in Android Bluetooth settings when using SPP.</li>
+        <li>Tap <b>Bluetooth</b>, then choose the paired SPP module or a nearby BLE module found by the scan.</li>
+        <li>Wait for the connection status to turn <b>connected</b>. The interface runs at <code>9600 8N1</code>.</li>
+        <li>Use the same dialog to disconnect or switch modules.</li>
+      </ol>
+      <p class="hint">The Android app supports raw SPP and BLE serial streams. USB cable access is not supported.</p>`
+    : `<h3>Bluetooth connection</h3>
       <ol>
         <li>Pair the VBar/KBar Bluetooth module in Windows Settings.</li>
         <li>Make sure Windows created an outgoing COM port for the device. If it did not, open <b>More Bluetooth options &gt; COM Ports &gt; Add</b> and create an outgoing port.</li>
@@ -326,7 +354,12 @@ function showHelp() {
         <li>Close the old VStabi application so it does not hold the COM port.</li>
         <li>Click <b>Bluetooth</b>, then choose the Bluetooth COM port. The interface runs at <code>9600 8N1</code>.</li>
       </ol>
-      <p class="hint">USB cable access is intentionally not supported. The original USB path uses Silicon Labs USBXpress, which browsers cannot open. The Bluetooth SPP COM port is supported.</p>
+      <p class="hint">USB cable access is intentionally not supported. The original USB path uses Silicon Labs USBXpress, which browsers cannot open. The Bluetooth SPP COM port is supported.</p>`;
+  openModal({
+    title: trShell('Help'),
+    width: 600,
+    body: `
+      ${connectionHelp}
       <h3>Pages</h3>
       <p>The original <code>-n</code> mode hides the top-level page tabs. Use the navigation buttons inside the pages, or the <b>Parameter &gt; Go to Page</b> menu.</p>
       <h3>Protocol</h3>
@@ -335,31 +368,293 @@ function showHelp() {
   });
 }
 
-function showLog() {
+const TYPE_ICON = { Good: '✅', Info: 'ℹ️', Warning: '⚠️', Critical: '🔶', Error: '❌' };
+
+async function showLog() {
+  // Device Event Log (ported from VStabiShell CErrorList):
+  // Get All Entries (S107:64) / Get 100 Entries (S107:63) fetch the log
+  // stored on the controller; Close dismisses. No Save (per request).
+  const elog = createEventLog();
+  state.eventLog = elog;
   const body = document.createElement('div');
-  const ta = document.createElement('textarea');
-  ta.className = 'log';
-  ta.readOnly = true;
-  ta.value = state.log.join('\n');
-  body.appendChild(ta);
-  const info = document.createElement('p');
-  info.className = 'hint';
-  info.textContent = trShell('Serial traffic and application events.');
-  body.appendChild(info);
-  state.logModal = ta;
+  body.className = 'event-log';
+  body.innerHTML = `
+    <p class="hint event-log-status">${escapeHtml(trShell('Connect the controller, then fetch its stored log.'))}</p>
+    <div class="event-log-table-wrap"><table class="event-log-table">
+      <thead><tr><th></th><th>Error</th><th>Time</th><th>Descr.</th></tr></thead>
+      <tbody></tbody>
+    </table></div>`;
+  const statusEl = body.querySelector('.event-log-status');
+  const tbody = body.querySelector('tbody');
+  const setStatus = (text) => { statusEl.textContent = text; };
+  const render = () => {
+    tbody.innerHTML = '';
+    if (!elog.entries.length) {
+      const tr = document.createElement('tr');
+      tr.className = 'event-log-empty';
+      const td = document.createElement('td');
+      td.colSpan = 4;
+      td.textContent = trShell('No entries yet. Use Get All Entries or Get 100 Entries.');
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+    for (const e of elog.entries) {
+      // Original matches the system locale, then English. The catalog has
+      // no Korean entries, so Korean UI falls through to English.
+      const d = describeError(e.code, getLang() === 'kor' ? 'ko' : 'en');
+      const shown = d;
+      const tr = document.createElement('tr');
+      const icon = document.createElement('td');
+      icon.className = 'event-log-icon';
+      icon.textContent = TYPE_ICON[shown.type] || '•';
+      icon.title = shown.type;
+      const code = document.createElement('td');
+      code.className = 'event-log-code';
+      code.textContent = String(e.code);
+      const time = document.createElement('td');
+      time.className = 'event-log-time';
+      time.textContent = formatLogTime(e.time);
+      const descr = document.createElement('td');
+      descr.className = 'event-log-descr';
+      descr.textContent = shown.short;
+      descr.title = shown.long || shown.short;
+      // Original CErrorListCellRenderer greys out rows whose description
+      // starts with "Reset" (e.g. code 14 "Reset Reason: Power On").
+      if (shown.short.startsWith('Reset')) tr.className = 'event-log-reset';
+      tr.append(icon, code, time, descr);
+      tbody.appendChild(tr);
+    }
+    const wrap = body.querySelector('.event-log-table-wrap');
+    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+  };
+  const refreshButtons = () => {
+    for (const b of body.querySelectorAll('button[data-fetch]')) b.disabled = elog.fetching;
+  };
+  render();
+  try {
+    await ensureErrorCatalog();
+  } catch (err) {
+    setStatus(`${trShell('Load error')}: ${err.message || err}`);
+  }
+  const fetchLog = async (kind) => {
+    if (!state.serial || !state.serial.portOpen) {
+      setStatus(trShell('Not connected. Connect the controller first.'));
+      return;
+    }
+    elog.entries = [];
+    elog.fetching = true;
+    render();
+    refreshButtons();
+    setStatus(trShell('Fetching log from controller ...'));
+    try {
+      state.serial.requestEventLog(kind);
+    } catch (err) {
+      elog.fetching = false;
+      refreshButtons();
+      setStatus(err.message || String(err));
+    }
+    // Fetch ends on idle timeout (see onLogEntry): original re-enables its
+    // buttons ~10 ticks after the last telegram.
+  };
+  const onEntry = () => {
+    recomputeLogTimes(elog.entries);
+    render();
+  };
+  elog.onEntry = onEntry;
+  elog.setStatus = setStatus;
+  elog.render = render;
+  elog.refreshButtons = refreshButtons;
+  const getAllBtn = document.createElement('button');
+  getAllBtn.type = 'button';
+  getAllBtn.dataset.fetch = 'all';
+  getAllBtn.textContent = trShell('Get All Entries');
+  getAllBtn.addEventListener('click', () => fetchLog(EVENT_LOG_ALL));
+  const get100Btn = document.createElement('button');
+  get100Btn.type = 'button';
+  get100Btn.dataset.fetch = 'recent';
+  get100Btn.textContent = trShell('Get 100 Entries');
+  get100Btn.addEventListener('click', () => fetchLog(EVENT_LOG_RECENT));
+  body.append(getAllBtn, get100Btn);
+  refreshButtons();
   openModal({
     title: trShell('Event Log'),
     body,
     width: 720,
-    buttons: [
-      { label: trShell('Clear'), onClick: () => { state.log = []; ta.value = ''; } },
-      { label: trShell('Close'), primary: true },
-    ],
-    onClose: () => { state.logModal = null; },
+    buttons: [{ label: trShell('Close'), primary: true }],
+    onClose: () => {
+      elog.fetching = false;
+      if (elog.idleTimer) clearTimeout(elog.idleTimer);
+      if (state.serial) state.serial.cancelEventLogRetry();
+      if (state.eventLog === elog) state.eventLog = null;
+    },
   });
 }
 
+function onLogEntry(id, value) {
+  const elog = state.eventLog;
+  if (!elog) return;
+  applyLogCode(elog.entries, value);
+  if (elog.idleTimer) clearTimeout(elog.idleTimer);
+  // End of stream = idle gap. The controller streams the log as a tight
+  // burst of I140 telegrams (~0.16s apart, interleaved with telemetry),
+  // so a short quiet gap means the fetch is done (original: ~10 quiet
+  // ticks of its 100ms timer).
+  elog.idleTimer = setTimeout(() => {
+    elog.fetching = false;
+    if (elog.setStatus) {
+      elog.setStatus(elog.entries.length
+        ? `${elog.entries.length} entries`
+        : 'No entries received.');
+    }
+    if (elog.refreshButtons) elog.refreshButtons();
+  }, 1500);
+  if (elog.onEntry) elog.onEntry();
+}
+
+async function showAndroidConnection() {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <h3>${escapeHtml(trShell('Bluetooth connection'))}</h3>
+    <p>${escapeHtml(trShell('Connect to a paired SPP module or scan for a nearby BLE module. The link uses the same VStabi protocol at 9600 8N1 over a raw Bluetooth stream.'))}</p>
+    <div id="androidCurrent"></div>
+    <div id="androidSpp"></div>
+    <div id="androidBle"></div>
+    <p class="hint" id="androidLinkStatus"></p>`;
+  const currentEl = body.querySelector('#androidCurrent');
+  const sppEl = body.querySelector('#androidSpp');
+  const bleEl = body.querySelector('#androidBle');
+  const statusEl = body.querySelector('#androidLinkStatus');
+  const setStatus = (text) => { statusEl.textContent = text || ''; };
+  let busy = false;
+
+  const section = (host, title) => {
+    const h = document.createElement('p');
+    h.innerHTML = `<b>${escapeHtml(trShell(title))}</b>`;
+    host.appendChild(h);
+    return h;
+  };
+  const note = (host, text) => {
+    const p = document.createElement('p');
+    p.className = 'hint';
+    p.textContent = trShell(text);
+    host.appendChild(p);
+  };
+  const deviceButton = (device, subtitle) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'android-device-btn';
+    const name = document.createElement('b');
+    name.textContent = device.name;
+    const meta = document.createElement('span');
+    meta.textContent = subtitle || device.address;
+    b.appendChild(name);
+    b.appendChild(meta);
+    b.addEventListener('click', async () => {
+      if (busy) return;
+      busy = true;
+      b.disabled = true;
+      setStatus(`${trShell('Connecting to')} ${device.name} ...`);
+      try {
+        await state.serial.connectAndroid(device);
+        closeModal();
+      } catch (err) {
+        setStatus('');
+        await alertDialog(err.message || String(err), trShell('Connection error'));
+      } finally {
+        busy = false;
+        b.disabled = false;
+      }
+    });
+    return b;
+  };
+
+  async function refresh() {
+    if (busy) return;
+    busy = true;
+    currentEl.innerHTML = '';
+    sppEl.innerHTML = '';
+    bleEl.innerHTML = '';
+    try {
+      if (state.serial.portOpen) {
+        section(currentEl, 'Current link');
+        const p = document.createElement('p');
+        p.className = 'hint';
+        p.textContent = state.serial.port ? state.serial.port.label : trShell('connected');
+        currentEl.appendChild(p);
+      }
+      setStatus(trShell('Requesting Bluetooth permission ...'));
+      try {
+        await requestAndroidPermissions();
+      } catch (err) {
+        setStatus(`${trShell('Bluetooth permission')}: ${err.message || err}`);
+      }
+
+      setStatus(trShell('Loading paired devices ...'));
+      try {
+        const bonded = (await listAndroidBondedDevices()).filter((d) => d.type !== 2);
+        section(sppEl, 'Paired devices (SPP)');
+        if (!bonded.length) note(sppEl, 'No paired devices. Pair the module in Android Bluetooth settings first.');
+        const sppList = document.createElement('div');
+        sppList.className = 'android-device-list';
+        sppEl.appendChild(sppList);
+        for (const d of bonded) sppList.appendChild(deviceButton(d, d.address));
+      } catch (err) {
+        section(sppEl, 'Paired devices (SPP)');
+        note(sppEl, `Cannot list paired devices: ${err.message || err}`);
+      }
+
+      setStatus(trShell('Scanning for BLE devices ...'));
+      section(bleEl, 'Nearby BLE devices');
+      const bleList = document.createElement('div');
+      bleList.className = 'android-device-list';
+      bleEl.appendChild(bleList);
+      try {
+        const ble = await scanAndroidBleDevices();
+        if (!ble.length) note(bleList, 'No supported BLE module found.');
+        for (const d of ble) bleList.appendChild(deviceButton(d, `${d.address}  ${d.rssi || ''} dBm`));
+      } catch (err) {
+        note(bleList, `BLE scan failed: ${err.message || err}`);
+      }
+      setStatus('');
+    } finally {
+      busy = false;
+    }
+  }
+
+  const buttons = [
+    { label: trShell('Rescan'), onClick: () => refresh() },
+  ];
+  if (state.serial.portOpen) {
+    buttons.push({
+      label: trShell('Disconnect'),
+      danger: true,
+      onClick: async (close) => {
+        close();
+        await state.serial.disconnect();
+      },
+    });
+  }
+  buttons.push({
+    label: trShell('Simulation'),
+    onClick: async (close) => {
+      close();
+      if (state.serial.portOpen) await state.serial.disconnect();
+      state.serial.startSimulation();
+      addLog('info', 'Simulation started');
+    },
+  });
+  buttons.push({ label: trShell('Cancel') });
+
+  openModal({ title: trShell('Bluetooth Connection'), body, buttons, width: 620 });
+  refresh();
+}
+
 async function showConnection() {
+  if (isAndroidNative()) {
+    await showAndroidConnection();
+    return;
+  }
   const supported = SerialClient.supported();
   const body = document.createElement('div');
   body.innerHTML = `
@@ -591,12 +886,29 @@ function openMenu(menu) {
   clone.classList.add('menu-clone');
   clone.style.display = 'block';
   clone.style.position = 'fixed';
-  clone.style.left = `${hostRect.left}px`;
-  clone.style.top = `${hostRect.bottom}px`;
+  const inSidebar = !!menu.closest('.sidebar');
+  const topLayout = document.body.classList.contains('layout-top');
+  const sideMenu = inSidebar && !topLayout;
+  // Original is display:none in all layouts (clone is shown instead), so measure
+  // the clone off-screen: its natural width before fixed positioning.
+  clone.style.visibility = 'hidden';
+  clone.style.display = 'block';
+  menuLayer.appendChild(clone);
+  const rawW = Math.max(clone.scrollWidth || 0, menu.offsetWidth || 0, topLayout ? 300 : 190);
+  menuLayer.removeChild(clone);
+  clone.style.visibility = '';
+  let left = sideMenu ? hostRect.right + 2 : hostRect.left;
+  let top = sideMenu ? hostRect.top : hostRect.bottom;
+  if (left + rawW > window.innerWidth - 4) left = Math.max(4, hostRect.left - rawW - 2);
+  if (top + 60 > window.innerHeight) top = Math.max(4, window.innerHeight - 60);
+  clone.style.left = `${left}px`;
+  clone.style.top = `${top}px`;
   clone.style.zIndex = '40000';
-  // Match unscaled width (offsetWidth is post-scale, divide out).
-  const rawW = dd.offsetWidth || menu.offsetWidth || 190;
-  clone.style.minWidth = `${Math.round(rawW / (scale || 1))}px`;
+  // Match unscaled width (scrollWidth is post-scale, divide out).
+  // Skip in layout-top: CSS min-width (300px) must win, otherwise the
+  // Parameter page-list dropdown gets squashed by the stale inline width.
+  if (!topLayout) clone.style.minWidth = `${Math.round(rawW / (scale || 1))}px`;
+  else clone.style.minWidth = '';
   menuLayer.appendChild(clone);
   menu.classList.add('open');
   menuLayerMenu = menu;
@@ -643,13 +955,18 @@ function applyShellText() {
   const tbTitle = {
     btnLoad: 'Load actual Bank from File',
     btnSave: 'Save actual Bank to File',
-    btnConnect: 'Connect Bluetooth SPP COM port',
+    btnConnect: isAndroidNative() ? 'Connect Bluetooth (SPP / BLE)' : 'Connect Bluetooth SPP COM port',
   };
   for (const [id, src] of Object.entries(tbTitle)) {
     const btn = el(id);
     if (btn) btn.title = trShell(src);
   }
   bankPill.title = trShell('Active bank');
+  const exitBtn = el('btnExit');
+  if (exitBtn) {
+    exitBtn.textContent = trShell('Exit');
+    exitBtn.title = trShell('Exit');
+  }
   const winTitle = { btnMin: 'Minimize', btnMax: 'Maximize', btnClose: 'Close' };
   for (const [id, src] of Object.entries(winTitle)) {
     const btn = el(id);
@@ -671,10 +988,6 @@ function markLang() {
 function refreshStatusTexts() {
   statusDisplay(state.serial ? state.serial.status : state.prevSerialStatus);
   if (state.store) bankPill.textContent = trBank(state.store.get(29));
-  const idx = state.ui ? state.ui.active : state.lastPage;
-  if (state.config && state.config.pages[idx]) {
-    statusRight.textContent = `VStabi 5.3.4 - 29.10.2012    ${pageTitle(state.config.pages[idx])}`;
-  }
 }
 
 async function switchLang(lang) {
@@ -731,6 +1044,15 @@ function wireStoreListeners() {
 
 
 function closeWindow() {
+  const app = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (app && typeof app.exitApp === 'function') {
+    Promise.resolve(app.exitApp()).catch(() => showClosedOverlay());
+    return;
+  }
+  showClosedOverlay();
+}
+
+function showClosedOverlay() {
   if (state.closed) return;
   state.closed = true;
   document.body.classList.add('is-closed');
@@ -742,24 +1064,25 @@ function closeWindow() {
 }
 
 function setupWindowControls() {
-  el('btnMin').addEventListener('click', () => document.body.classList.add('is-minimized'));
-  el('btnRestore').addEventListener('click', () => document.body.classList.remove('is-minimized'));
-  el('btnClose').addEventListener('click', closeWindow);
-  el('btnMax').addEventListener('click', async () => {
-    try {
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-      else await document.exitFullscreen();
-      setTimeout(fitScale, 120);
-    } catch (err) {}
-  });
+  const restore = el('btnRestore');
+  if (restore) restore.addEventListener('click', () => document.body.classList.remove('is-minimized'));
 }
 
 function fitScale() {
   const margin = 20;
-  const sx = (window.innerWidth - margin) / 979;
-  const sy = (window.innerHeight - margin) / 566;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const sideScale = Math.min((vw - margin) / 1079, (vh - margin) / 477);
+  const sideHeight = 477 * sideScale;
+  const useTop = vh - sideHeight > vh * 0.12;
+  document.body.classList.toggle('layout-top', useTop);
+  const frame = document.querySelector('.app-window');
+  const frameW = frame ? frame.offsetWidth : 1079;
+  const frameH = frame ? frame.offsetHeight : 477;
+  const sx = (vw - margin) / frameW;
+  const sy = (vh - margin) / frameH;
   let scale = Math.min(sx, sy);
-  scale = Math.max(0.55, Math.min(2.2, scale));
+  scale = Math.max(0.55, Math.min(2.6, scale));
   document.documentElement.style.setProperty('--scale', String(scale));
 }
 
@@ -794,6 +1117,10 @@ function setupKeyboard() {
 }
 
 async function init() {
+  if (isAndroidNative()) {
+    document.body.classList.add('is-android');
+    installKeypad();
+  }
   await ensureLang(getLang());
   setupMenus();
   setupWindowControls();
@@ -822,11 +1149,15 @@ async function init() {
       onStatus: onSerialStatus,
       onLog: (dir, text) => addLog(dir, text),
       onTelemetry: () => {},
+      onLogEntry,
+      onLogRetry: (attempt) => {
+        const elog = state.eventLog;
+        if (elog && elog.setStatus) elog.setStatus(trShell('Retrying log request ...') + ` (${attempt}/3)`);
+      },
     });
     el('btnConnect').addEventListener('click', showConnection);
-    connPill.addEventListener('click', showConnection);
-    el('btnLoad').addEventListener('click', triggerLoad);
-    el('btnSave').addEventListener('click', saveFile);
+    const exitBtn = el('btnExit');
+    if (exitBtn) exitBtn.addEventListener('click', closeWindow);
     fileInput.addEventListener('change', async () => {
       if (fileInput.files && fileInput.files.length) await loadFile(fileInput.files[0]);
     });
@@ -835,7 +1166,6 @@ async function init() {
       if (config.pages[i].pageVisible !== false) { first = i; break; }
     }
     activatePage(state.ui, first);
-    statusRight.textContent = `VStabi 5.3.4 - 29.10.2012    ${pageTitle(config.pages[first])}`;
     const qs = new URLSearchParams(location.search);
     if (qs.has('page')) {
       const target = Number.parseInt(qs.get('page'), 10);

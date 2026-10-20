@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KBar Setup</string>
+    <string name="title_activity_main">KBar Setup</string>
+    <string name="package_name">org.rfcap.kbar</string>
+    <string name="custom_url_scheme">org.rfcap.kbar</string>
+</resources>

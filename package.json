@@ -1,0 +1,25 @@
+{
+  "name": "kbar-setup",
+  "version": "1.0.0",
+  "description": "KBar Setup - Android port of the KBar web configurator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test 'tests/*.test.mjs'",
+    "www:sync": "node scripts/sync-www.mjs",
+    "cap:sync": "npm run www:sync && npx cap sync android",
+    "apk:debug": "node scripts/build-apk.mjs debug",
+    "apk:release": "node scripts/build-apk.mjs release",
+    "device:install": "adb install -r kbar-debug.apk",
+    "device:install-release": "adb install -r kbar-release.apk",
+    "device:log": "adb logcat -v time | findstr /I \"RfBle RfSerial Capacitor chromium Console\""
+  },
+  "dependencies": {
+    "@capacitor/android": "8.3.4",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "8.3.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.3.0"
+  }
+}

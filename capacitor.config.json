@@ -1,0 +1,13 @@
+{
+  "appId": "org.rfcap.kbar",
+  "appName": "KBar Setup",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
