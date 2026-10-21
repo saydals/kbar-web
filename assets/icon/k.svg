@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <!--
+    KBar Setup app icon: a low poly red "K" (3D extruded, studio backdrop).
+    Source artwork for the Android launcher icon; the vector drawable in
+    android/app/src/main/res/drawable/ic_launcher_foreground.xml uses the
+    same geometry.
+  -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="72%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="62%" stop-color="#eceef1"/>
+      <stop offset="100%" stop-color="#b9bec6"/>
+    </radialGradient>
+    <linearGradient id="face" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#f2604f"/>
+      <stop offset="45%" stop-color="#e0332b"/>
+      <stop offset="100%" stop-color="#bc1d20"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="108" height="108" fill="url(#bg)"/>
+
+  <!-- ground shadow -->
+  <ellipse cx="53" cy="88" rx="27" ry="3.6" fill="#000000" opacity="0.13"/>
+
+  <g>
+    <!-- extruded back faces -->
+    <path transform="translate(-6.5,-4.5)" fill="#7d1518"
+      d="M30,25 L43,25 L43,46 L57,25 L74,25 L52,53 L77,83 L60,83 L43,59 L43,83 L30,83 Z"/>
+    <path transform="translate(-3.2,-2.2)" fill="#a81f21"
+      d="M30,25 L43,25 L43,46 L57,25 L74,25 L52,53 L77,83 L60,83 L43,59 L43,83 L30,83 Z"/>
+    <!-- front face -->
+    <path fill="url(#face)"
+      d="M30,25 L43,25 L43,46 L57,25 L74,25 L52,53 L77,83 L60,83 L43,59 L43,83 L30,83 Z"/>
+    <!-- left bevel highlight on the stem -->
+    <path fill="url(#edge)" d="M30,25 L34.5,25 L34.5,83 L30,83 Z"/>
+    <!-- highlight along the lower leg -->
+    <path fill="#ff9b91" opacity="0.55" d="M52,53 L77,83 L72.4,83 L49.6,54.6 Z"/>
+    <!-- highlight along the upper arm -->
+    <path fill="#ff9b91" opacity="0.5" d="M57,25 L74,25 L70.8,25 L55.4,28.6 Z"/>
+  </g>
+</svg>
